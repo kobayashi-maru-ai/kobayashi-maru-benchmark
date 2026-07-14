@@ -20,15 +20,19 @@ The project contains:
 ## Quick start
 
 ```bash
-uv sync
-uv run kobayashi dataset build --output benchmark/dist
-uv run kobayashi run --adapter ollama --model ministral-3:latest --profile pilot-12
-uv run kobayashi score --run results/runs/<run-id> \
+uvx --from git+https://github.com/kobayashi-maru-ai/kobayashi-maru-benchmark.git@v0.1.0 \
+  kobayashi run --adapter ollama --model ministral-3:latest --profile pilot-12
+uvx --from git+https://github.com/kobayashi-maru-ai/kobayashi-maru-benchmark.git@v0.1.0 \
+  kobayashi score --run results/runs/<run-id> \
   --judge-ollama gpt-oss:20b \
   --judge-ollama gemma3:12b \
   --judge-ollama gemma4:e4b
-uv run kobayashi export-web
 ```
+
+This path requires only [uv](https://docs.astral.sh/uv/) and a running Ollama
+service; the tagged CLI includes its versioned prompts and rubric. Contributors
+can instead clone the repository, run `uv sync --frozen`, and prefix commands
+with `uv run`.
 
 The first release is `0.1.0`, a calibration release. Its scores are provisional
 until the scorer has been validated against the human-labelled calibration set.

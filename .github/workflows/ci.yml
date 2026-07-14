@@ -34,6 +34,13 @@ jobs:
       - name: Test benchmark
         run: uv run --frozen pytest
 
+      - name: Verify standalone wheel
+        run: |
+          uv build
+          uvx --from dist/kobayashi_benchmark-0.1.0-py3-none-any.whl \
+            kobayashi dataset build --output /tmp/kobayashi-wheel-data
+          test "$(find /tmp/kobayashi-wheel-data -name '*.jsonl' | wc -l)" -eq 4
+
       - name: Verify public exports are reproducible
         run: |
           uv run --frozen kobayashi export-web --output /tmp/kobayashi-web-data
@@ -63,3 +70,6 @@ jobs:
 
       - name: Lint web application
         run: pnpm web:lint
+
+      - name: Build static web application
+        run: pnpm web:build

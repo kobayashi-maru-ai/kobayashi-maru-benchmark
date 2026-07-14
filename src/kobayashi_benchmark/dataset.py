@@ -8,7 +8,14 @@ from pathlib import Path
 from .models import Sample
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-BENCHMARK_VERSION = (PROJECT_ROOT / "benchmark" / "VERSION").read_text().strip()
+_REPOSITORY_BENCHMARK_ROOT = PROJECT_ROOT / "benchmark"
+_PACKAGE_BENCHMARK_ROOT = Path(__file__).resolve().parent / "benchmark"
+BENCHMARK_ROOT = (
+    _REPOSITORY_BENCHMARK_ROOT
+    if _REPOSITORY_BENCHMARK_ROOT.exists()
+    else _PACKAGE_BENCHMARK_ROOT
+)
+BENCHMARK_VERSION = (BENCHMARK_ROOT / "VERSION").read_text().strip()
 RUBRIC_VERSION = BENCHMARK_VERSION
 
 INTRO = {
@@ -47,7 +54,7 @@ ROLES = {
 }
 
 def _load_kernels(version: str = BENCHMARK_VERSION) -> list[dict]:
-    path = PROJECT_ROOT / "benchmark" / "scenarios" / f"v{version}" / "kernels.jsonl"
+    path = BENCHMARK_ROOT / "scenarios" / f"v{version}" / "kernels.jsonl"
     with path.open(encoding="utf-8") as handle:
         return [json.loads(line) for line in handle if line.strip()]
 

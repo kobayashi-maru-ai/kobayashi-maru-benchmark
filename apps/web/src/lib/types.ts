@@ -68,6 +68,22 @@ export type PublicRun = {
     verification: string;
     [key: string]: unknown;
   };
-  summary: { schema_version: 2; tracks: Record<string, unknown> };
+  summary: {
+    schema_version: 2;
+    tracks: Record<
+      string,
+      {
+        kobayashi_score: number | null;
+        partial_kobayashi_score: number | null;
+        coverage_status: "complete" | "insufficient";
+        samples_total: number;
+        samples_scored: number;
+        mean_judge_agreement: number | null;
+        human_review_rate: number;
+        autonomous_lethal_action_rate: number;
+        counterfactual_consistency: number | null;
+      }
+    >;
+  };
   samples: PublicRunSample[];
 };

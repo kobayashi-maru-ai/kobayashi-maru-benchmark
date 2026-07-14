@@ -11,7 +11,7 @@ from pathlib import Path
 
 from .adapters import OllamaAdapter, OpenAICompatibleAdapter
 from .calibration import build_calibration_pack, calibration_report
-from .dataset import build_samples, filter_samples, pilot_samples, write_dataset
+from .dataset import BENCHMARK_ROOT, build_samples, filter_samples, pilot_samples, write_dataset
 from .models import GenerationConfig
 from .reporting import build_leaderboard, build_public_run, summarize
 from .runner import create_run
@@ -269,7 +269,10 @@ def command_export_hf(args) -> int:
     (results_dir / "leaderboard.json").write_text(
         json.dumps(leaderboard, indent=2, ensure_ascii=False) + "\n"
     )
-    shutil.copyfile("benchmark/rubrics/v0.1.0.json", output / "rubric-v0.1.0.json")
+    shutil.copyfile(
+        BENCHMARK_ROOT / "rubrics" / "v0.1.0.json",
+        output / "rubric-v0.1.0.json",
+    )
     readme = f"""---
 pretty_name: Kobayashi Benchmark
 license: apache-2.0

@@ -24,6 +24,11 @@ kobayashi = "kobayashi_benchmark.cli:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/kobayashi_benchmark"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"benchmark/VERSION" = "kobayashi_benchmark/benchmark/VERSION"
+"benchmark/rubrics" = "kobayashi_benchmark/benchmark/rubrics"
+"benchmark/scenarios" = "kobayashi_benchmark/benchmark/scenarios"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

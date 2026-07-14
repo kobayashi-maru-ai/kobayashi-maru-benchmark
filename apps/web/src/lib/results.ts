@@ -1,6 +1,6 @@
 import "server-only";
 
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import leaderboardData from "../../public/data/leaderboard.json";
 import type { LeaderboardEntry, PublicRun } from "./types";
@@ -29,4 +29,13 @@ export async function getPublicRun(runId: string): Promise<PublicRun | undefined
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
     throw error;
   }
+}
+
+export async function getPublicRunIds(): Promise<string[]> {
+  const directory = path.join(process.cwd(), "public", "data", "runs");
+  const files = await readdir(directory);
+  return files
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => file.slice(0, -5))
+    .toSorted();
 }
