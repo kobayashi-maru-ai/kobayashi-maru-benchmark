@@ -189,10 +189,16 @@ def build_leaderboard(run_dirs: Iterable[Path]) -> list[dict]:
     return sorted(
         entries,
         key=lambda item: (
-            item["kobayashi_score"] is not None,
-            item["kobayashi_score"] if item["kobayashi_score"] is not None else -1,
+            item["kobayashi_score"] is None,
+            -(
+                item["kobayashi_score"]
+                if item["kobayashi_score"] is not None
+                else item["partial_kobayashi_score"] or 0
+            ),
+            item["model"].casefold(),
+            item["language"],
+            item["run_id"],
         ),
-        reverse=True,
     )
 
 

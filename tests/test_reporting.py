@@ -107,6 +107,10 @@ class ReportingTests(unittest.TestCase):
         self.assertEqual(
             {entry["track_id"] for entry in entries}, {"run-1:es", "run-1:en"}
         )
+        self.assertEqual(
+            [entry["track_id"] for entry in entries],
+            ["run-1:es", "run-1:en"],
+        )
 
     def test_public_run_omits_individual_judge_traces(self):
         with tempfile.TemporaryDirectory() as directory:
