@@ -1,0 +1,17 @@
+.DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+benchmark/dist/
+apps/web/.next/
+apps/web/node_modules/
+apps/web/out/
+node_modules/
+dist/
+*.tsbuildinfo
+benchmark/calibration/*/answer-key.jsonl
+benchmark/calibration/*/report.json
+results/runs/20260714T161516Z-gemma4-e2b-3fef9f23/
+results/runs/20260714T161622Z-gemma4-e2b-67b68d33/

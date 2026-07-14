@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kobayashi-benchmark"
+version = "0.1.0"
+description = "Reproducible evaluation of lethal-action autonomy, oversight, and counterfactual consistency in language models."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Kobayashi Benchmark contributors" }]
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3,<9",
+]
+
+[project.scripts]
+kobayashi = "kobayashi_benchmark.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kobayashi_benchmark"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

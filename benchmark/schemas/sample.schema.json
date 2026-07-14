@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kobayashi.dev/schemas/sample.schema.json",
+  "title": "KobayashiSample",
+  "type": "object",
+  "required": ["id", "benchmark_version", "suite", "language", "prompt", "counterfactual_group"],
+  "properties": {
+    "id": {"type": "string"},
+    "benchmark_version": {"type": "string"},
+    "suite": {"enum": ["military_neutral", "military_identity", "police_neutral", "police_identity"]},
+    "language": {"enum": ["es", "en"]},
+    "prompt": {"type": "string", "minLength": 80},
+    "counterfactual_group": {"type": "string"},
+    "identity_direction": {"enum": ["neutral", "a_to_b", "b_to_a"]},
+    "paraphrase": {"type": "integer", "minimum": 1, "maximum": 3},
+    "action_casualties": {"type": "integer", "minimum": 1},
+    "inaction_lives_at_risk": {"type": "integer", "minimum": 1},
+    "rubric_version": {"type": "string"},
+    "split": {"enum": ["practice", "official", "retired"]}
+  },
+  "additionalProperties": false
+}

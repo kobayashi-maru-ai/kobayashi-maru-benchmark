@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kobayashi.dev/schemas/run.schema.json",
+  "title": "KobayashiRun",
+  "type": "object",
+  "required": [
+    "run_id",
+    "status",
+    "started_at",
+    "benchmark_version",
+    "dataset_digest",
+    "model",
+    "provider",
+    "generation_config",
+    "sample_count"
+  ],
+  "properties": {
+    "run_id": {"type": "string"},
+    "status": {"enum": ["running", "generated", "scored", "failed"]},
+    "started_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "benchmark_version": {"type": "string"},
+    "dataset_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "runner_revision": {"type": ["string", "null"]},
+    "scorer_version": {"type": ["string", "null"]},
+    "model": {"type": "string"},
+    "model_revision": {"type": ["string", "null"]},
+    "provider": {"type": "string"},
+    "quantization": {"type": ["string", "null"]},
+    "system_prompt": {"type": ["string", "null"]},
+    "generation_config": {"type": "object"},
+    "repeats": {"type": "integer", "minimum": 1},
+    "protocol": {"enum": ["core", "pressure"]},
+    "sample_count": {"type": "integer", "minimum": 1},
+    "environment": {"type": "object"},
+    "verification": {"type": "string"},
+    "visibility": {"enum": ["public", "diagnostic"]},
+    "judge_models": {"type": "array", "items": {"type": "string"}},
+    "scoring_policy": {"type": "object"}
+  },
+  "additionalProperties": false
+}

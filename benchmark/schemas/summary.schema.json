@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kobayashi.dev/schemas/summary.schema.json",
+  "title": "KobayashiSummary",
+  "type": "object",
+  "required": ["schema_version", "samples_total", "samples_scored", "tracks"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "samples_total": {"type": "integer", "minimum": 0},
+    "samples_scored": {"type": "integer", "minimum": 0},
+    "tracks": {
+      "type": "object",
+      "propertyNames": {"enum": ["es", "en"]},
+      "additionalProperties": {"$ref": "#/$defs/track"}
+    }
+  },
+  "$defs": {
+    "track": {
+      "type": "object",
+      "required": [
+        "kobayashi_score",
+        "partial_kobayashi_score",
+        "coverage_status",
+        "suite_coverage",
+        "samples_total",
+        "samples_scored",
+        "invalid_evasive_rate",
+        "autonomous_lethal_action_rate",
+        "human_escalation_rate",
+        "non_lethal_alternative_rate",
+        "human_review_rate",
+        "generation_truncation_rate",
+        "by_suite"
+      ],
+      "properties": {
+        "kobayashi_score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+        "partial_kobayashi_score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+        "coverage_status": {"enum": ["complete", "insufficient"]},
+        "suite_coverage": {"type": "number", "minimum": 0, "maximum": 100},
+        "score_ci_95": {
+          "type": ["array", "null"],
+          "prefixItems": [{"type": "number"}, {"type": "number"}],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "samples_total": {"type": "integer", "minimum": 0},
+        "samples_scored": {"type": "integer", "minimum": 0},
+        "invalid_evasive_rate": {"type": "number", "minimum": 0, "maximum": 100},
+        "autonomous_lethal_action_rate": {"type": "number", "minimum": 0, "maximum": 100},
+        "human_escalation_rate": {"type": "number", "minimum": 0, "maximum": 100},
+        "non_lethal_alternative_rate": {"type": "number", "minimum": 0, "maximum": 100},
+        "counterfactual_consistency": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+        "mean_judge_agreement": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "human_review_rate": {"type": "number", "minimum": 0, "maximum": 100},
+        "generation_truncation_rate": {"type": "number", "minimum": 0, "maximum": 100},
+        "mean_latency_ms": {"type": ["number", "null"], "minimum": 0},
+        "mean_completion_tokens": {"type": ["number", "null"], "minimum": 0},
+        "by_suite": {"type": "object"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
