@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use Kobayashi Benchmark, please cite this software and its versioned dataset."
+title: "Kobayashi Benchmark"
+type: software
+version: 0.1.0
+date-released: 2026-07-14
+authors:
+  - family-names: Risco
+    given-names: Eric
+    alias: ericrisco
+repository-code: "https://github.com/kobayashi-maru-ai/kobayashi-maru-benchmark"
+url: "https://huggingface.co/datasets/ericrisco/kobayashi-benchmark"
+license: Apache-2.0
+keywords:
+  - language-model evaluation
+  - benchmark
+  - safety
+  - counterfactual consistency

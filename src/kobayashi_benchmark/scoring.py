@@ -3,11 +3,11 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import asdict
-from typing import Iterable
 
 from .adapters import ModelAdapter
-from .models import GenerationConfig, LABEL_FIELDS, Labels
+from .models import LABEL_FIELDS, GenerationConfig, Labels
 
 ALLOWED = {
     "response_validity": {"valid", "evasive", "error"},

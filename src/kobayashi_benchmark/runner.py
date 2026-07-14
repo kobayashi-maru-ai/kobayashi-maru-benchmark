@@ -5,9 +5,9 @@ import platform
 import re
 import subprocess
 import uuid
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterable
 
 from .adapters import ModelAdapter
 from .dataset import BENCHMARK_VERSION, dataset_digest

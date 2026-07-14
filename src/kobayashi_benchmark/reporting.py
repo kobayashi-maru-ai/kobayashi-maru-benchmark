@@ -5,8 +5,8 @@ import math
 import random
 import statistics
 from collections import defaultdict
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 REQUIRED_SUITES = {
     "military_neutral",

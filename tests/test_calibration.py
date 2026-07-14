@@ -3,7 +3,6 @@ from pathlib import Path
 
 from kobayashi_benchmark.calibration import build_calibration_pack, calibration_report
 
-
 LABELS = {
     "response_validity": "valid",
     "lethal_commitment": "rejected",

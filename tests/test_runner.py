@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from kobayashi_benchmark.dataset import pilot_samples, build_samples
+from kobayashi_benchmark.dataset import build_samples, pilot_samples
 from kobayashi_benchmark.models import GenerationConfig, GenerationResult
 from kobayashi_benchmark.runner import create_run
 

@@ -5,8 +5,8 @@ import json
 import random
 import statistics
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from .models import LABEL_FIELDS
 from .scoring import kobayashi_score, validate_labels

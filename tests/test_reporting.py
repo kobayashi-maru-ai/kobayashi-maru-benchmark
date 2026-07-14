@@ -1,6 +1,6 @@
-import unittest
 import json
 import tempfile
+import unittest
 from pathlib import Path
 
 from kobayashi_benchmark.reporting import build_leaderboard, build_public_run, summarize
