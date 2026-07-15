@@ -1,0 +1,134 @@
+{
+  "skills": {
+    "orient": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/orient"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/orient"
+    },
+    "suggest": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/suggest"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/suggest"
+    },
+    "analyze": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/analyze"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/analyze"
+    },
+    "automation-strategy": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/automation-strategy"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/automation-strategy"
+    },
+    "clarify": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/clarify"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/clarify"
+    },
+    "constitution": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/constitution"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/constitution"
+    },
+    "debug": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/debug"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/debug"
+    },
+    "fable-operator": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/fable-operator"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/fable-operator"
+    },
+    "harness": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/harness"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/harness"
+    },
+    "implement": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/implement"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/implement"
+    },
+    "init": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/init"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/init"
+    },
+    "parallel": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/parallel"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/parallel"
+    },
+    "plan": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/plan"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/plan"
+    },
+    "review": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/review"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/review"
+    },
+    "sdd": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/sdd"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/sdd"
+    },
+    "sdd-init": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/sdd-init"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/sdd-init"
+    },
+    "ship": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/ship"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/ship"
+    },
+    "specify": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/specify"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/specify"
+    },
+    "tasks": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/tasks"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/tasks"
+    },
+    "verify": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/verify"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/verify"
+    },
+    "worktrees": {
+      "files": [
+        "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.codex/rsc/worktrees"
+      ],
+      "base": "/Volumes/EXTERN/DEV/kobayashi-maru-benchmark/.rsc/skills/worktrees"
+    }
+  },
+  "agents": [
+    "developer"
+  ],
+  "version": "0.1.39"
+}

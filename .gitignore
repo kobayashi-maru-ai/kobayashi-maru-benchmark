@@ -11,5 +11,6 @@ apps/web/out/
 node_modules/
 dist/
 *.tsbuildinfo
-benchmark/calibration/*/answer-key.jsonl
-benchmark/calibration/*/report.json
+# Local operational tools and project knowledge (never commit)
+/01-TOOLS/
+/02-DOCS/

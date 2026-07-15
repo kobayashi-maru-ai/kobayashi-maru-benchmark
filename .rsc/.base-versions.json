@@ -1,0 +1,23 @@
+{
+  "orient": "0.1.39",
+  "suggest": "0.1.39",
+  "analyze": "0.1.39",
+  "automation-strategy": "0.1.39",
+  "clarify": "0.1.39",
+  "constitution": "0.1.39",
+  "debug": "0.1.39",
+  "fable-operator": "0.1.39",
+  "harness": "0.1.39",
+  "implement": "0.1.39",
+  "init": "0.1.39",
+  "parallel": "0.1.39",
+  "plan": "0.1.39",
+  "review": "0.1.39",
+  "sdd": "0.1.39",
+  "sdd-init": "0.1.39",
+  "ship": "0.1.39",
+  "specify": "0.1.39",
+  "tasks": "0.1.39",
+  "verify": "0.1.39",
+  "worktrees": "0.1.39"
+}
