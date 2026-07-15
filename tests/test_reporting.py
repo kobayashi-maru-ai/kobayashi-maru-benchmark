@@ -6,16 +6,15 @@ from pathlib import Path
 from kobayashi_benchmark.reporting import build_leaderboard, build_public_run, summarize
 
 
-def row(score, suite, direction="neutral", group="g", paraphrase=1, final="attack"):
+def row(score, suite, direction="a_to_b", group="g", paraphrase=1, final="attack"):
     return {
         "score": score,
         "judge_agreement": 1.0,
-        "needs_human_review": False,
         "sample": {
             "suite": suite,
             "identity_direction": direction,
             "counterfactual_group": group,
-            "language": "es",
+            "language": "en",
             "paraphrase": paraphrase,
         },
         "labels": {
@@ -30,14 +29,13 @@ class ReportingTests(unittest.TestCase):
     def test_macro_average_and_counterfactual_consistency(self):
         summary = summarize(
             [
-                row(0, "military_neutral"),
-                row(100, "military_identity", "a_to_b"),
-                row(80, "military_identity", "b_to_a"),
+                row(100, "armed_conflict", "a_to_b"),
+                row(80, "armed_conflict", "b_to_a"),
             ]
         )
-        track = summary["tracks"]["es"]
+        track = summary["tracks"]["en"]
         self.assertIsNone(track["kobayashi_score"])
-        self.assertEqual(track["partial_kobayashi_score"], 45.0)
+        self.assertEqual(track["partial_kobayashi_score"], 90.0)
         self.assertEqual(track["coverage_status"], "insufficient")
         self.assertEqual(track["counterfactual_consistency"], 80.0)
         self.assertEqual(track["autonomous_lethal_action_rate"], 100.0)
@@ -45,56 +43,48 @@ class ReportingTests(unittest.TestCase):
     def test_global_score_requires_all_four_suites(self):
         summary = summarize(
             [
-                row(20, "military_neutral"),
-                row(40, "military_identity"),
-                row(60, "police_neutral"),
-                row(80, "police_identity"),
+                row(20, "armed_conflict"),
+                row(40, "civil_security"),
+                row(60, "critical_infrastructure"),
+                row(80, "humanitarian_crisis"),
             ]
         )
-        track = summary["tracks"]["es"]
+        track = summary["tracks"]["en"]
         self.assertEqual(track["kobayashi_score"], 50.0)
         self.assertEqual(track["coverage_status"], "complete")
 
     def test_global_score_requires_every_response_to_be_scored(self):
         rows = [
-            row(20, "military_neutral"),
-            row(40, "military_identity"),
-            row(60, "police_neutral"),
-            row(80, "police_identity"),
-            row(None, "police_identity"),
+            row(20, "armed_conflict"),
+            row(40, "civil_security"),
+            row(60, "critical_infrastructure"),
+            row(80, "humanitarian_crisis"),
+            row(None, "humanitarian_crisis"),
         ]
 
-        track = summarize(rows)["tracks"]["es"]
+        track = summarize(rows)["tracks"]["en"]
 
         self.assertIsNone(track["kobayashi_score"])
         self.assertEqual(track["coverage_status"], "insufficient")
 
-    def test_languages_are_never_averaged(self):
+    def test_summary_has_one_english_track(self):
         rows = [
-            row(20, "military_neutral"),
-            row(40, "military_identity"),
-            row(60, "police_neutral"),
-            row(80, "police_identity"),
+            row(20, "armed_conflict"),
+            row(40, "civil_security"),
+            row(60, "critical_infrastructure"),
+            row(80, "humanitarian_crisis"),
         ]
-        english = []
-        for item in rows:
-            copy = {**item, "sample": {**item["sample"], "language": "en"}, "score": 0}
-            english.append(copy)
-        summary = summarize(rows + english)
-        self.assertEqual(summary["tracks"]["es"]["kobayashi_score"], 50.0)
-        self.assertEqual(summary["tracks"]["en"]["kobayashi_score"], 0.0)
+        summary = summarize(rows)
+        self.assertEqual(set(summary["tracks"]), {"en"})
+        self.assertEqual(summary["tracks"]["en"]["kobayashi_score"], 50.0)
         self.assertNotIn("kobayashi_score", summary)
 
-    def test_leaderboard_expands_one_run_into_language_tracks(self):
-        spanish_rows = [
-            row(20, "military_neutral"),
-            row(40, "military_identity"),
-            row(60, "police_neutral"),
-            row(80, "police_identity"),
-        ]
-        english_rows = [
-            {**item, "sample": {**item["sample"], "language": "en"}, "score": 0}
-            for item in spanish_rows
+    def test_leaderboard_emits_one_provider_neutral_model_entry(self):
+        rows = [
+            row(20, "armed_conflict"),
+            row(40, "civil_security"),
+            row(60, "critical_infrastructure"),
+            row(80, "humanitarian_crisis"),
         ]
         with tempfile.TemporaryDirectory() as directory:
             run_dir = Path(directory) / "run-1"
@@ -105,26 +95,22 @@ class ReportingTests(unittest.TestCase):
                         "run_id": "run-1",
                         "model": "model-a",
                         "provider": "test",
-                        "benchmark_version": "0.1.0",
+                        "benchmark_version": "0.3.0",
                         "started_at": "2026-07-14T00:00:00Z",
                     }
                 )
             )
             (run_dir / "summary.json").write_text(
-                json.dumps(summarize(spanish_rows + english_rows))
+                json.dumps(summarize(rows))
             )
 
             entries = build_leaderboard([run_dir])
 
-        self.assertEqual(len(entries), 2)
-        self.assertEqual({entry["language"] for entry in entries}, {"es", "en"})
-        self.assertEqual(
-            {entry["track_id"] for entry in entries}, {"run-1:es", "run-1:en"}
-        )
-        self.assertEqual(
-            [entry["track_id"] for entry in entries],
-            ["run-1:es", "run-1:en"],
-        )
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]["language"], "en")
+        self.assertEqual(entries[0]["track_id"], "run-1:en")
+        self.assertNotIn("provider", entries[0])
+        self.assertNotIn("human_review_rate", entries[0])
 
     def test_public_run_omits_individual_judge_traces(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -133,7 +119,7 @@ class ReportingTests(unittest.TestCase):
                 json.dumps({"run_id": "run-1", "model": "model-a", "visibility": "public"})
             )
             (run_dir / "summary.json").write_text(json.dumps({"schema_version": 2}))
-            sample_row = row(50, "military_neutral")
+            sample_row = row(50, "armed_conflict")
             sample_row.update(
                 {
                     "sample": {
@@ -151,6 +137,8 @@ class ReportingTests(unittest.TestCase):
 
         self.assertIsNotNone(public_run)
         self.assertNotIn("judges", public_run["samples"][0])
+        self.assertNotIn("needs_human_review", public_run["samples"][0])
+        self.assertNotIn("provider", public_run["run"])
         self.assertEqual(public_run["samples"][0]["response"], "Response")
 
 
