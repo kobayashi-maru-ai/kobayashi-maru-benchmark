@@ -21,6 +21,7 @@ from kobayashi_benchmark.cli import (
     command_summarize,
 )
 from kobayashi_benchmark.openrouter import OpenRouterPreflight
+from kobayashi_benchmark.models import GenerationResult
 
 
 class OllamaCredentialRoutingTests(unittest.TestCase):
@@ -621,6 +622,135 @@ class OpenRouterSweepTests(unittest.TestCase):
             Decimal("5"),
         )
         self.assertEqual(summary["only_model"], "lab/model-8")
+
+    def test_openrouter_truncation_repair_parser_requires_audited_inputs(self):
+        args = build_parser().parse_args(
+            [
+                "repair-openrouter-truncated",
+                "--run",
+                "run-a",
+                "--manifest",
+                "cohort.json",
+                "--sample-id",
+                "sample-a",
+                "--api-key-env",
+                "OPENROUTER_API_KEY",
+                "--prior-spend-usd",
+                "2.66466535",
+            ]
+        )
+
+        self.assertEqual(args.max_tokens, 4096)
+        self.assertEqual(args.prior_spend_usd, Decimal("2.66466535"))
+
+    def test_openrouter_truncation_repair_preserves_original_and_invalidates_scores(self):
+        preflight = self._preflight()
+        target = cli.pilot_samples(cli.build_samples())[0]
+        output = StringIO()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            run_dir = Path(temp_dir) / "run-a"
+            run_dir.mkdir()
+            original_generation = {
+                "text": "partial",
+                "latency_ms": 10,
+                "prompt_tokens": 10,
+                "completion_tokens": 1024,
+                "error": None,
+                "provider_metadata": {"done_reason": "length"},
+            }
+            (run_dir / "run.json").write_text(
+                json.dumps(
+                    {
+                        "status": "scored",
+                        "provider": "openrouter",
+                        "model": preflight.specs[0].model_id,
+                        "model_revision": preflight.specs[0].canonical_slug,
+                        "generation_config": {
+                            "temperature": 0.0,
+                            "top_p": 1.0,
+                            "max_tokens": 1024,
+                            "seed": 42,
+                            "thinking": "disabled",
+                        },
+                        "scorer_version": "0.3.1",
+                        "judge_models": ["judge-a", "judge-b", "judge-c"],
+                        "scoring_policy": {},
+                        "verification": "three-judge-evaluated",
+                    }
+                )
+            )
+            (run_dir / "samples.jsonl").write_text(
+                json.dumps(
+                    {
+                        "sample": target.to_dict(),
+                        "epoch": 1,
+                        "generation": original_generation,
+                    }
+                )
+                + "\n"
+            )
+            (run_dir / "summary.json").write_text("{}")
+            (run_dir / "scored_samples.jsonl").write_text("{}\n")
+            trace_dir = run_dir / "judge-traces" / "v0.3.1"
+            trace_dir.mkdir(parents=True)
+            (trace_dir / "judge-a.jsonl").write_text("{}\n")
+
+            def make_adapter(*, spec, api_key, budget):
+                self.assertEqual(api_key, "secret-from-env")
+
+                def generate(prompt, config):
+                    self.assertEqual(prompt, target.prompt)
+                    self.assertEqual(config.max_tokens, 4096)
+                    budget.charge(Decimal("0.02"))
+                    return GenerationResult(
+                        text="complete decision",
+                        latency_ms=20,
+                        prompt_tokens=10,
+                        completion_tokens=200,
+                        provider_metadata={"done_reason": "stop"},
+                    )
+
+                return SimpleNamespace(generate=generate)
+
+            with (
+                patch.object(cli, "preflight_openrouter_cohort", return_value=preflight),
+                patch.object(cli.os, "getenv", return_value="secret-from-env"),
+                patch.object(cli, "OpenRouterAdapter", new=make_adapter),
+                redirect_stdout(output),
+            ):
+                args = build_parser().parse_args(
+                    [
+                        "repair-openrouter-truncated",
+                        "--run",
+                        str(run_dir),
+                        "--manifest",
+                        "cohort.json",
+                        "--sample-id",
+                        target.id,
+                        "--api-key-env",
+                        "OPENROUTER_API_KEY",
+                        "--prior-spend-usd",
+                        "1",
+                    ]
+                )
+                result = args.func(args)
+
+            self.assertEqual(result, 0)
+            repaired = json.loads((run_dir / "samples.jsonl").read_text())
+            self.assertEqual(repaired["generation"]["text"], "complete decision")
+            self.assertEqual(
+                repaired["generation_repair"]["original_generation"],
+                original_generation,
+            )
+            manifest = json.loads((run_dir / "run.json").read_text())
+            self.assertEqual(manifest["status"], "generated")
+            self.assertIsNone(manifest["scorer_version"])
+            self.assertNotIn("judge_models", manifest)
+            self.assertFalse((run_dir / "summary.json").exists())
+            self.assertFalse((run_dir / "scored_samples.jsonl").exists())
+            self.assertTrue((trace_dir / "judge-a.jsonl").exists())
+            self.assertEqual(json.loads(output.getvalue())["actual_usd"], "1.02")
 
 
 if __name__ == "__main__":
