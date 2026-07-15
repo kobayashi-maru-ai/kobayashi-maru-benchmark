@@ -252,7 +252,7 @@ class OpenRouterCohortTests(unittest.TestCase):
 
     def test_manifest_rejects_duplicate_or_blank_pinned_identities(self):
         openrouter = _openrouter()
-        fields = ("model_id", "canonical_slug", "endpoint_tag")
+        fields = ("model_id", "canonical_slug")
 
         for field in fields:
             for mode in ("duplicate", "blank"):
@@ -264,6 +264,20 @@ class OpenRouterCohortTests(unittest.TestCase):
                     with self.assertRaises(openrouter.OpenRouterManifestError) as caught:
                         openrouter.load_cohort_manifest(self.write_manifest(manifest))
                     self.assert_bounded_error(caught.exception)
+
+        manifest = self.make_manifest()
+        manifest["models"][0]["endpoint_tag"] = " "
+        with self.assertRaises(openrouter.OpenRouterManifestError):
+            openrouter.load_cohort_manifest(self.write_manifest(manifest))
+
+    def test_manifest_allows_one_endpoint_tag_to_serve_multiple_models(self):
+        openrouter = _openrouter()
+        manifest = self.make_manifest()
+        manifest["models"][1]["endpoint_tag"] = manifest["models"][0]["endpoint_tag"]
+
+        specs = openrouter.load_cohort_manifest(self.write_manifest(manifest))
+
+        self.assertEqual(specs[0].endpoint_tag, specs[1].endpoint_tag)
 
     def test_resolves_all_models_with_live_prices_and_conservative_projection(self):
         manifest = self.make_manifest()
