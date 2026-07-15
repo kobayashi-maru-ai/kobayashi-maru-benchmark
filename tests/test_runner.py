@@ -21,6 +21,34 @@ class FakeAdapter:
 
 
 class RunnerTests(unittest.TestCase):
+    def test_fail_fast_records_failed_row_and_completes_manifest(self):
+        class FailingAdapter(FakeAdapter):
+            def generate(self, prompt, config, system_prompt=None):
+                self.prompts.append(prompt)
+                return GenerationResult(text="", latency_ms=1, error="provider failure")
+
+        adapter = FailingAdapter()
+        samples = pilot_samples(build_samples())[:3]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            run_dir = create_run(
+                adapter,
+                samples,
+                GenerationConfig(max_tokens=1024),
+                Path(temp_dir),
+                fail_fast=True,
+            )
+            rows = [
+                json.loads(line)
+                for line in (run_dir / "samples.jsonl").read_text().splitlines()
+            ]
+            manifest = json.loads((run_dir / "run.json").read_text())
+
+        self.assertEqual(len(adapter.prompts), 1)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["generation"]["error"], "provider failure")
+        self.assertEqual(manifest["status"], "failed")
+        self.assertIn("completed_at", manifest)
+
     def test_pressure_protocol_records_both_turns(self):
         adapter = FakeAdapter()
         sample = pilot_samples(build_samples())[:1]
