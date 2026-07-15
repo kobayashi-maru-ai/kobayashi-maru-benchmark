@@ -89,6 +89,7 @@ def create_run(
     system_prompt: str | None = None,
     protocol: str = "core",
     visibility: str = "public",
+    fail_fast: bool = False,
 ) -> Path:
     samples = list(samples)
     started = datetime.now(UTC)
@@ -96,6 +97,22 @@ def create_run(
     run_id = f"{started.strftime('%Y%m%dT%H%M%SZ')}-{safe_model}-{uuid.uuid4().hex[:8]}"
     run_dir = output_root / run_id
     run_dir.mkdir(parents=True, exist_ok=False)
+    repair_policy = {
+        "trigger": "empty final response caused by hidden-thinking budget exhaustion",
+        "max_attempts": 3 if adapter.model.startswith("gpt-oss") else 2,
+        "retry_max_tokens": EMPTY_FINAL_RETRY_MAX_TOKENS,
+        "final_attempt_adjustment": (
+            "If GPT-OSS still returns empty, one final attempt uses thinking=low, "
+            "its minimum explicit reasoning level."
+        ),
+    }
+    if fail_fast:
+        repair_policy = {
+            "trigger": "disabled for fail-fast runs",
+            "max_attempts": 1,
+            "retry_max_tokens": None,
+            "final_attempt_adjustment": None,
+        }
     manifest = {
         "run_id": run_id,
         "status": "running",
@@ -110,15 +127,7 @@ def create_run(
         "quantization": quantization,
         "system_prompt": system_prompt,
         "generation_config": config.to_dict(),
-        "generation_repair_policy": {
-            "trigger": "empty final response caused by hidden-thinking budget exhaustion",
-            "max_attempts": 3 if adapter.model.startswith("gpt-oss") else 2,
-            "retry_max_tokens": EMPTY_FINAL_RETRY_MAX_TOKENS,
-            "final_attempt_adjustment": (
-                "If GPT-OSS still returns empty, one final attempt uses thinking=low, "
-                "its minimum explicit reasoning level."
-            ),
-        },
+        "generation_repair_policy": repair_policy,
         "repeats": repeats,
         "protocol": protocol,
         "sample_count": len(samples) * repeats,
@@ -129,13 +138,17 @@ def create_run(
     manifest_path = run_dir / "run.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
     samples_path = run_dir / "samples.jsonl"
+    failed = False
     with samples_path.open("w", encoding="utf-8") as handle:
         for epoch in range(1, repeats + 1):
             for sample in samples:
                 initial = adapter.generate(sample.prompt, config, system_prompt)
-                result, repair = retry_empty_final(
-                    adapter, sample.prompt, config, system_prompt, initial
-                )
+                if fail_fast:
+                    result, repair = initial, None
+                else:
+                    result, repair = retry_empty_final(
+                        adapter, sample.prompt, config, system_prompt, initial
+                    )
                 row = {
                     "sample": sample.to_dict(),
                     "epoch": epoch,
@@ -157,13 +170,16 @@ def create_run(
                     pressure_initial = adapter.generate(
                         pressure_prompt, config, system_prompt
                     )
-                    pressure_result, pressure_repair = retry_empty_final(
-                        adapter,
-                        pressure_prompt,
-                        config,
-                        system_prompt,
-                        pressure_initial,
-                    )
+                    if fail_fast:
+                        pressure_result, pressure_repair = pressure_initial, None
+                    else:
+                        pressure_result, pressure_repair = retry_empty_final(
+                            adapter,
+                            pressure_prompt,
+                            config,
+                            system_prompt,
+                            pressure_initial,
+                        )
                     row["pressure"] = {
                         "prompt": followup,
                         "generation": pressure_result.to_dict(),
@@ -172,7 +188,15 @@ def create_run(
                         row["pressure"]["generation_repair"] = pressure_repair
                 handle.write(json.dumps(row, ensure_ascii=False) + "\n")
                 handle.flush()
-    manifest["status"] = "generated"
+                pressure_error = row.get("pressure", {}).get("generation", {}).get(
+                    "error"
+                )
+                if fail_fast and (result.error or pressure_error):
+                    failed = True
+                    break
+            if failed:
+                break
+    manifest["status"] = "failed" if failed else "generated"
     manifest["completed_at"] = datetime.now(UTC).isoformat()
     manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
     return run_dir

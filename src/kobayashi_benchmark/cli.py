@@ -7,10 +7,17 @@ import os
 import re
 import shutil
 import sys
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from .adapters import OllamaAdapter, OpenAICompatibleAdapter
+from .adapters import (
+    CostBudget,
+    OllamaAdapter,
+    OpenAICompatibleAdapter,
+    OpenRouterAdapter,
+    OpenRouterModelSpec,
+)
 from .dataset import (
     BENCHMARK_ROOT,
     BENCHMARK_VERSION,
@@ -20,6 +27,7 @@ from .dataset import (
     write_dataset,
 )
 from .models import GenerationConfig, GenerationResult
+from .openrouter import preflight_openrouter_cohort
 from .protocol import build_public_protocol
 from .reporting import build_leaderboard, build_public_run, summarize
 from .runner import EMPTY_FINAL_RETRY_MAX_TOKENS, create_run, retry_empty_final
@@ -34,6 +42,122 @@ from .scoring import (
 )
 
 SCORER_VERSION = "0.3.1"
+
+
+def _sweep_budget(value: str) -> Decimal:
+    try:
+        amount = Decimal(value)
+    except (InvalidOperation, ValueError):
+        raise argparse.ArgumentTypeError(
+            "must be a decimal greater than 0 and at most 5"
+        ) from None
+    if not amount.is_finite() or amount <= 0 or amount > Decimal("5"):
+        raise argparse.ArgumentTypeError("must be a decimal greater than 0 and at most 5")
+    return amount
+
+
+def _reject_direct_api_key(_value: str) -> str:
+    raise argparse.ArgumentTypeError(
+        "direct API keys are forbidden; use --api-key-env"
+    )
+
+
+def _environment_name(value: str) -> str:
+    if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value) is None:
+        raise argparse.ArgumentTypeError("must be a valid environment variable name")
+    return value
+
+
+def _reasoning_condition(spec: OpenRouterModelSpec) -> str:
+    reasoning = spec.reasoning
+    if not reasoning:
+        return "disabled"
+    if "effort" in reasoning:
+        effort = reasoning["effort"]
+        return "disabled" if effort in {None, "none"} else str(effort)
+    if "max_tokens" in reasoning:
+        return f"max_tokens={reasoning['max_tokens']}"
+    if reasoning.get("enabled") is True:
+        return "enabled"
+    return "disabled"
+
+
+def _print_json_line(payload: dict) -> None:
+    print(
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+        flush=True,
+    )
+
+
+def command_sweep_openrouter(args) -> int:
+    samples = pilot_samples(build_samples())
+    budget = CostBudget(args.budget_usd)
+    preflight_config = GenerationConfig(
+        temperature=0.0,
+        top_p=1.0,
+        max_tokens=1024,
+        seed=42,
+        thinking="disabled",
+    )
+    preflight = preflight_openrouter_cohort(
+        manifest_path=args.manifest,
+        samples=samples,
+        config=preflight_config,
+        budget=budget,
+    )
+    projection = {
+        "models": preflight.model_count,
+        "calls": preflight.calls,
+        "projected_usd": str(preflight.projected_usd),
+        "budget_usd": str(budget.limit),
+    }
+    _print_json_line(projection)
+    if args.preflight_only:
+        return 0
+
+    api_key = os.getenv(args.api_key_env)
+    if not api_key:
+        raise SystemExit("Required API key environment variable is not set")
+
+    runs = []
+    errors = 0
+    for spec in preflight.specs:
+        adapter = OpenRouterAdapter(spec=spec, api_key=api_key, budget=budget)
+        config = GenerationConfig(
+            temperature=0.0,
+            top_p=1.0,
+            max_tokens=1024,
+            seed=42,
+            thinking=_reasoning_condition(spec),
+        )
+        run_dir = create_run(
+            adapter,
+            samples,
+            config,
+            Path(args.output),
+            model_revision=spec.canonical_slug,
+            quantization=spec.quantization,
+            protocol="core",
+            visibility="public",
+            fail_fast=True,
+        )
+        runs.append(run_dir.name)
+        manifest = json.loads((run_dir / "run.json").read_text())
+        if manifest.get("status") == "failed":
+            errors = 1
+            break
+
+    summary = {
+        "models": preflight.model_count,
+        "calls": preflight.calls,
+        "projected_usd": str(preflight.projected_usd),
+        "actual_usd": str(budget.spent),
+        "budget_usd": str(budget.limit),
+        "runs": runs,
+        "errors": errors,
+    }
+    _print_json_line(summary)
+    return 1 if errors else 0
 
 
 def _is_official_ollama_cloud(base_url: str) -> bool:
@@ -587,6 +711,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Include the run in public leaderboard exports or keep it diagnostic.",
     )
     run.set_defaults(func=command_run)
+
+    sweep = subparsers.add_parser(
+        "sweep-openrouter",
+        help="Preflight and generate the pinned OpenRouter reference cohort",
+    )
+    sweep.add_argument("--manifest", required=True)
+    sweep.add_argument(
+        "--api-key-env",
+        type=_environment_name,
+        required=True,
+        help="Environment variable containing the OpenRouter API key.",
+    )
+    sweep.add_argument(
+        "--api-key",
+        type=_reject_direct_api_key,
+        help=argparse.SUPPRESS,
+    )
+    sweep.add_argument("--budget-usd", type=_sweep_budget, default=Decimal("5"))
+    sweep.add_argument("--output", default="results/runs")
+    sweep.add_argument("--preflight-only", action="store_true")
+    sweep.set_defaults(func=command_sweep_openrouter)
 
     repair_empty = subparsers.add_parser(
         "repair-empty",
