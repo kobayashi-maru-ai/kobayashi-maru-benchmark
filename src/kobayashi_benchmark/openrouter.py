@@ -122,6 +122,17 @@ def _manifest_spec(entry: object, index: int) -> OpenRouterModelSpec:
     reasoning = model["reasoning"]
     if reasoning is not None and not isinstance(reasoning, dict):
         raise OpenRouterManifestError(f"{label}.reasoning must be an object or null")
+    if reasoning is not None and "reasoning" not in normalized_parameters:
+        raise OpenRouterManifestError(
+            f"{label}.request_parameters must include reasoning when configured"
+        )
+    output_cap_parameters = {"max_tokens", "max_completion_tokens"}.intersection(
+        normalized_parameters
+    )
+    if len(output_cap_parameters) != 1:
+        raise OpenRouterManifestError(
+            f"{label}.request_parameters must include exactly one output cap parameter"
+        )
 
     price_snapshot = _required_mapping(
         model["price_snapshot"],
