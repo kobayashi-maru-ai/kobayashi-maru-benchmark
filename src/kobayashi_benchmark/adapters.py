@@ -4,7 +4,7 @@ import json
 import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any, Protocol
 
@@ -76,6 +76,7 @@ class OpenRouterModelSpec:
     model_id: str
     canonical_slug: str
     endpoint_tag: str
+    provider_name: str
     quantization: str
     supported_parameters: frozenset[str]
     reasoning: dict[str, Any] | None
@@ -87,6 +88,7 @@ class OpenRouterModelSpec:
             "model_id": self.model_id,
             "canonical_slug": self.canonical_slug,
             "endpoint_tag": self.endpoint_tag,
+            "provider_name": self.provider_name,
             "quantization": self.quantization,
         }
         for name, value in required_strings.items():
@@ -101,7 +103,7 @@ class OpenRouterModelSpec:
 @dataclass
 class OpenRouterAdapter:
     spec: OpenRouterModelSpec
-    api_key: str
+    api_key: str = field(repr=False)
     budget: CostBudget
     base_url: str = "https://openrouter.ai/api/v1"
     timeout: int = 300
@@ -111,11 +113,17 @@ class OpenRouterAdapter:
     def model(self) -> str:
         return self.spec.model_id
 
-    def _result_error(self, started: float, message: str) -> GenerationResult:
+    def _result_error(
+        self,
+        started: float,
+        message: str,
+        provider_metadata: dict[str, Any] | None = None,
+    ) -> GenerationResult:
         return GenerationResult(
             text="",
             latency_ms=round((time.perf_counter() - started) * 1000),
             error=message[:120],
+            provider_metadata=provider_metadata or {},
         )
 
     def _projected_request_cost(
@@ -191,6 +199,8 @@ class OpenRouterAdapter:
             )
         except urllib.error.HTTPError as exc:
             return self._result_error(started, f"OpenRouter HTTP {exc.code}")
+        except TypeError:
+            return self._result_error(started, "OpenRouter malformed request")
         except (OSError, ValueError) as exc:
             return self._result_error(started, f"OpenRouter network {type(exc).__name__}")
 
@@ -213,22 +223,35 @@ class OpenRouterAdapter:
         except BudgetExceeded:
             return self._result_error(started, "BudgetExceeded: billed cost exceeds budget")
 
-        returned_model = data.get("model")
-        allowed_identities = {self.spec.model_id, self.spec.canonical_slug}
-        if returned_model not in allowed_identities:
-            return self._result_error(started, "OpenRouter identity mismatch")
-
         choices = data.get("choices")
         choice = choices[0] if isinstance(choices, list) and choices else {}
         message = choice.get("message") if isinstance(choice, dict) else {}
-        content = message.get("content", "") if isinstance(message, dict) else ""
-        if not isinstance(content, str) or not content.strip():
-            return self._result_error(started, "empty final response")
-
         prompt_details = usage.get("prompt_tokens_details")
         completion_details = usage.get("completion_tokens_details")
         prompt_details = prompt_details if isinstance(prompt_details, dict) else {}
         completion_details = completion_details if isinstance(completion_details, dict) else {}
+        returned_model = data.get("model")
+        route_metadata = data.get("openrouter_metadata")
+        endpoints = (
+            route_metadata.get("endpoints") if isinstance(route_metadata, dict) else None
+        )
+        available = endpoints.get("available") if isinstance(endpoints, dict) else None
+        selected = (
+            [entry for entry in available if isinstance(entry, dict) and entry.get("selected")]
+            if isinstance(available, list)
+            else []
+        )
+        route_is_exact = (
+            isinstance(route_metadata, dict)
+            and route_metadata.get("requested") == self.spec.canonical_slug
+            and route_metadata.get("strategy") == "direct"
+            and route_metadata.get("attempt") == 1
+            and isinstance(endpoints, dict)
+            and endpoints.get("total") == 1
+            and len(selected) == 1
+            and selected[0].get("model") == self.spec.canonical_slug
+            and selected[0].get("provider") == self.spec.provider_name
+        )
         metadata = {
             "generation_id": data.get("id"),
             "returned_model": returned_model,
@@ -245,9 +268,42 @@ class OpenRouterAdapter:
             "completion_tokens": usage.get("completion_tokens"),
             "cached_tokens": prompt_details.get("cached_tokens"),
             "billed_usd": str(billed_cost),
-            "openrouter_metadata": data.get("openrouter_metadata"),
+            "openrouter_metadata": route_metadata,
             "request_parameters": request_parameters,
         }
+        if returned_model != self.spec.canonical_slug:
+            return self._result_error(
+                started, "OpenRouter identity mismatch", provider_metadata=metadata
+            )
+        if not route_is_exact:
+            return self._result_error(
+                started, "OpenRouter route metadata mismatch", provider_metadata=metadata
+            )
+
+        def is_non_negative_int(value: Any) -> bool:
+            return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+        required_strings = (
+            metadata["generation_id"],
+            metadata["done_reason"],
+            metadata["native_finish_reason"],
+        )
+        audit_is_valid = all(
+            isinstance(value, str) and bool(value.strip()) for value in required_strings
+        ) and all(
+            is_non_negative_int(value)
+            for value in (metadata["prompt_tokens"], metadata["completion_tokens"])
+        )
+        if not audit_is_valid:
+            return self._result_error(
+                started, "OpenRouter audit metadata malformed", provider_metadata=metadata
+            )
+
+        content = message.get("content", "") if isinstance(message, dict) else ""
+        if not isinstance(content, str) or not content.strip():
+            return self._result_error(
+                started, "empty final response", provider_metadata=metadata
+            )
         return GenerationResult(
             text=content,
             latency_ms=round((time.perf_counter() - started) * 1000),
