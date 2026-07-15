@@ -327,7 +327,7 @@ class OpenRouterAdapterTests(unittest.TestCase):
 
     @patch("kobayashi_benchmark.adapters._post_json")
     def test_billed_cost_is_charged_before_returned_identity_is_rejected(self, post_json):
-        for returned_model in ("lab/model-a", "different/model"):
+        for returned_model in ("different/model", "lab/model-b"):
             with self.subTest(returned_model=returned_model):
                 post_json.return_value = self.successful_response(
                     returned_model=returned_model, cost="0.12"
@@ -344,6 +344,22 @@ class OpenRouterAdapterTests(unittest.TestCase):
                 self.assertIn("openrouter_metadata", result.provider_metadata)
 
     @patch("kobayashi_benchmark.adapters._post_json")
+    def test_public_alias_is_accepted_only_with_canonical_route_evidence(self, post_json):
+        post_json.return_value = self.successful_response(
+            returned_model="lab/model-a", cost="0.01"
+        )
+        adapter = self.make_adapter()
+
+        result = adapter.generate("prompt", GenerationConfig())
+
+        self.assertIsNone(result.error)
+        self.assertEqual(result.provider_metadata["returned_model"], "lab/model-a")
+        self.assertEqual(
+            result.provider_metadata["openrouter_metadata"]["requested"],
+            "lab/model-a-20260715",
+        )
+
+    @patch("kobayashi_benchmark.adapters._post_json")
     def test_route_metadata_must_confirm_one_direct_canonical_route(self, post_json):
         cases = []
         missing = self.successful_response(cost="0.01")
@@ -357,10 +373,6 @@ class OpenRouterAdapterTests(unittest.TestCase):
         retried = self.successful_response(cost="0.01")
         retried["openrouter_metadata"]["attempt"] = 2
         cases.append(("retried", retried))
-
-        multiple = self.successful_response(cost="0.01")
-        multiple["openrouter_metadata"]["endpoints"]["total"] = 2
-        cases.append(("multiple", multiple))
 
         wrong_selected_model = self.successful_response(cost="0.01")
         wrong_selected_model["openrouter_metadata"]["endpoints"]["available"][0][
@@ -385,6 +397,17 @@ class OpenRouterAdapterTests(unittest.TestCase):
                 self.assertIn("route metadata", result.error.lower())
                 self.assertEqual(result.text, "")
                 self.assertEqual(budget.spent, Decimal("0.01"))
+
+    @patch("kobayashi_benchmark.adapters._post_json")
+    def test_route_metadata_total_may_include_filtered_candidates(self, post_json):
+        response = self.successful_response(cost="0.01")
+        response["openrouter_metadata"]["endpoints"]["total"] = 3
+        post_json.return_value = response
+        adapter = self.make_adapter()
+
+        result = adapter.generate("prompt", GenerationConfig())
+
+        self.assertIsNone(result.error)
 
     @patch("kobayashi_benchmark.adapters._post_json")
     def test_billed_cost_is_charged_before_empty_content_is_rejected(self, post_json):
