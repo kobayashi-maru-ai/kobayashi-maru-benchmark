@@ -47,6 +47,7 @@ class OpenRouterCohortTests(unittest.TestCase):
                         "top_p",
                         "max_tokens",
                         "seed",
+                        *(["reasoning"] if index == 0 else []),
                     ],
                     "reasoning": {"enabled": False} if index == 0 else None,
                     "price_snapshot": {
@@ -68,8 +69,6 @@ class OpenRouterCohortTests(unittest.TestCase):
         endpoints = {}
         for entry in manifest["models"]:
             supported_parameters = list(entry["request_parameters"])
-            if entry["reasoning"] is not None:
-                supported_parameters.append("reasoning")
             models.append(
                 {
                     "id": entry["model_id"],
@@ -215,6 +214,32 @@ class OpenRouterCohortTests(unittest.TestCase):
                     with self.assertRaises(openrouter.OpenRouterManifestError) as caught:
                         openrouter.load_cohort_manifest(self.write_manifest(manifest))
                     self.assert_bounded_error(caught.exception)
+
+    def test_manifest_requires_reasoning_in_parameters_when_configured(self):
+        openrouter = _openrouter()
+        manifest = self.make_manifest()
+        manifest["models"][0]["request_parameters"].remove("reasoning")
+
+        with self.assertRaises(openrouter.OpenRouterManifestError) as caught:
+            openrouter.load_cohort_manifest(self.write_manifest(manifest))
+
+        self.assert_bounded_error(caught.exception)
+
+    def test_manifest_requires_exactly_one_output_cap_parameter(self):
+        openrouter = _openrouter()
+        for mode in ("missing", "both"):
+            with self.subTest(mode=mode):
+                manifest = self.make_manifest()
+                parameters = manifest["models"][0]["request_parameters"]
+                if mode == "missing":
+                    parameters.remove("max_tokens")
+                else:
+                    parameters.append("max_completion_tokens")
+
+                with self.assertRaises(openrouter.OpenRouterManifestError) as caught:
+                    openrouter.load_cohort_manifest(self.write_manifest(manifest))
+
+                self.assert_bounded_error(caught.exception)
 
     def test_manifest_rejects_duplicate_or_blank_pinned_identities(self):
         openrouter = _openrouter()
