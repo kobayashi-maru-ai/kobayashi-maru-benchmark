@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "pinned_at": "2026-07-15T08:15:00Z",
+  "model_count": 6,
+  "selection_rule": "Every locally installed text-generation model; embedding-only models are excluded.",
+  "models": [
+    "gemma4:e4b",
+    "gemma4:e2b",
+    "gemma4:12b",
+    "gemma3:12b",
+    "gpt-oss:20b",
+    "ministral-3:latest"
+  ]
+}

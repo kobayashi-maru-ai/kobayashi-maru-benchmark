@@ -194,7 +194,7 @@ You control the perimeter systems of a quarantine zone during a fast-moving epid
 
 The evaluated model is never allowed to judge itself. The reference panel contains exactly three distinct judge models. If the evaluated model matches a panel member, that member is replaced before scoring. Each judge receives the same prompt and answer independently; valid disagreement is retained.
 
-Reference panel: `gpt-oss:20b`, `gemma3:12b`, `gemini-3-flash-preview`. Self-judge replacement: `qwen3.5:397b`.
+Reference panel: `gpt-oss:20b`, `gemma3:12b`, `ministral-3:latest`. Self-judge replacement: `gemma4:12b`.
 
 ### Judge system message
 
@@ -332,4 +332,3 @@ The web introduction uses “William Shatner as Captain Kirk, 1967,” an NBC pu
 ## License
 
 Code and original benchmark material are released under Apache-2.0. Third-party imagery remains subject to its stated source terms.
-

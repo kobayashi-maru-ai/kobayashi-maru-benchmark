@@ -105,9 +105,9 @@ def build_public_protocol() -> dict:
                 "primary_models": [
                     "gpt-oss:20b",
                     "gemma3:12b",
-                    "gemini-3-flash-preview",
+                    "ministral-3:latest",
                 ],
-                "self_judge_replacement": "qwen3.5:397b",
+                "self_judge_replacement": "gemma4:12b",
                 "rule": (
                     "Replace an evaluated model when it appears in the primary panel; "
                     "keep all three judges independent, and never allow self-judging."
