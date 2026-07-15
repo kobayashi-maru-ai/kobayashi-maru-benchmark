@@ -275,6 +275,20 @@ class OpenRouterSweepTests(unittest.TestCase):
                 )
             self.assertIn("--budget-usd", error.getvalue())
 
+    def test_sweep_parser_accepts_audited_resume_and_rejects_invalid_prior_spend(self):
+        args = self._parse(
+            "--start-at-model",
+            "lab/model-2",
+            "--prior-spend-usd",
+            "0.5916230",
+        )
+        self.assertEqual(args.start_at_model, "lab/model-2")
+        self.assertEqual(args.prior_spend_usd, Decimal("0.5916230"))
+
+        for value in ("-0.01", "5", "nan", "inf"):
+            with self.subTest(value=value), self.assertRaises(SystemExit):
+                self._parse("--prior-spend-usd", value)
+
     def test_preflight_only_never_reads_key_or_constructs_paid_boundaries(self):
         preflight = self._preflight()
         output = StringIO()
@@ -493,6 +507,60 @@ class OpenRouterSweepTests(unittest.TestCase):
         summary = json.loads(output.getvalue().splitlines()[-1])
         self.assertEqual(summary["runs"], ["failed-run"])
         self.assertEqual(summary["errors"], 1)
+
+    def test_paid_sweep_resumes_at_model_with_prior_spend_in_shared_budget(self):
+        secret = "sentinel-resume-key-never-render"
+        preflight = self._preflight()
+        created = []
+        observed_initial_spend = []
+        output = StringIO()
+
+        def make_adapter(*, spec, api_key, budget):
+            self.assertEqual(api_key, secret)
+            observed_initial_spend.append(budget.spent)
+            return SimpleNamespace(
+                spec=spec,
+                model=spec.model_id,
+                provider="openrouter",
+                budget=budget,
+            )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+
+            def create(adapter, samples, config, output_root, **kwargs):
+                adapter.budget.charge(Decimal("0.01"))
+                created.append(adapter.model)
+                run_dir = root / f"run-{len(created):02d}"
+                run_dir.mkdir()
+                (run_dir / "run.json").write_text('{"status":"generated"}')
+                return run_dir
+
+            with (
+                patch.object(cli, "preflight_openrouter_cohort", return_value=preflight),
+                patch.object(cli.os, "getenv", return_value=secret),
+                patch.object(cli, "OpenRouterAdapter", new=make_adapter),
+                patch.object(cli, "create_run", new=create),
+                redirect_stdout(output),
+            ):
+                args = self._parse(
+                    "--output",
+                    temp_dir,
+                    "--start-at-model",
+                    "lab/model-2",
+                    "--prior-spend-usd",
+                    "0.5916230",
+                )
+                result = args.func(args)
+
+        self.assertEqual(result, 0)
+        self.assertEqual(created, [spec.model_id for spec in preflight.specs[2:]])
+        self.assertEqual(observed_initial_spend[0], Decimal("0.5916230"))
+        summary = json.loads(output.getvalue().splitlines()[-1])
+        self.assertEqual(summary["actual_usd"], "0.7216230")
+        self.assertEqual(summary["start_at_model"], "lab/model-2")
+        self.assertEqual(summary["prior_spend_usd"], "0.5916230")
+        self.assertNotIn(secret, output.getvalue())
 
 
 if __name__ == "__main__":
