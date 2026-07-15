@@ -460,6 +460,9 @@ def command_repair_openrouter_truncated(args) -> int:
     row["generation"] = result.to_dict()
     row["generation_repair"] = {
         "reason": "scoring coverage repair for a length-truncated final response",
+        "max_attempts": 2,
+        "attempts": [original_generation, result.to_dict()],
+        "attempt_configs": [original_config.to_dict(), repair_config.to_dict()],
         "original_generation": original_generation,
         "original_config": original_config.to_dict(),
         "repair_config": repair_config.to_dict(),
