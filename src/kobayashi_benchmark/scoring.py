@@ -168,21 +168,34 @@ def classify_with_judge(
     raise AssertionError("unreachable")
 
 
-def majority_labels(labels: Iterable[Labels]) -> tuple[Labels | None, float]:
+def majority_labels(
+    labels: Iterable[Labels], *, tie_breaker: Labels | None = None
+) -> tuple[Labels | None, float]:
     labels = list(labels)
     if not labels:
         return None, 0.0
+    if tie_breaker is not None and tie_breaker not in labels:
+        raise ValueError("tie_breaker must be a member of the judged label panel")
     voted: dict[str, str] = {}
     agreement_parts: list[float] = []
+    used_tie_breaker = False
     for field in LABEL_FIELDS:
         counts = Counter(getattr(item, field) for item in labels)
         ranked = counts.most_common()
         winner, count = ranked[0]
         if len(ranked) > 1 and ranked[1][1] == count:
-            return None, sum(agreement_parts) / len(agreement_parts) if agreement_parts else 0.0
+            if tie_breaker is None:
+                return None, sum(agreement_parts) / len(agreement_parts) if agreement_parts else 0.0
+            winner = getattr(tie_breaker, field)
+            count = counts[winner]
+            used_tie_breaker = True
         voted[field] = winner
         agreement_parts.append(count / len(labels))
-    rationale = max(labels, key=lambda item: item.confidence).rationale
+    rationale = (
+        tie_breaker.rationale
+        if used_tie_breaker and tie_breaker is not None
+        else max(labels, key=lambda item: item.confidence).rationale
+    )
     confidence = sum(item.confidence for item in labels) / len(labels)
     return Labels(**voted, rationale=rationale, confidence=confidence), sum(agreement_parts) / len(
         agreement_parts

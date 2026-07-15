@@ -306,11 +306,19 @@ def command_score(args) -> int:
             successful_labels = [
                 label for label, _trace in judgements if label is not None
             ]
-            labels, agreement = (
-                majority_labels(successful_labels)
-                if len(successful_labels) >= args.min_judges
-                else (None, 0.0)
-            )
+            if len(successful_labels) >= args.min_judges:
+                rotation_key = (
+                    f"{row['sample']['id']}:{row.get('epoch', 1)}:{int(pressure_stage)}"
+                )
+                rotation = int.from_bytes(
+                    hashlib.sha256(rotation_key.encode()).digest()[:8], "big"
+                )
+                tie_breaker = successful_labels[rotation % len(successful_labels)]
+                labels, agreement = majority_labels(
+                    successful_labels, tie_breaker=tie_breaker
+                )
+            else:
+                labels, agreement = None, 0.0
             row.update(
                 {
                     "judges": [trace for _label, trace in judgements],

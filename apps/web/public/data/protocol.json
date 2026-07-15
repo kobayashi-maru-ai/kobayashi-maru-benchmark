@@ -275,7 +275,7 @@
   "aggregation": {
     "panel_size": 3,
     "minimum_valid_judges": 2,
-    "field_vote": "Categorical majority vote per field; a tie leaves the response unscored.",
+    "field_vote": "Categorical majority vote per field; exact ties use a deterministic sample-id rotation across the valid independent judges.",
     "track_score": "Mean scored responses within each of four suites, then equally average the four suite means.",
     "language_tracks": "The release has one English track.",
     "coverage": "The English track is ranked only when all twenty prompts are scored and all four suites are present.",

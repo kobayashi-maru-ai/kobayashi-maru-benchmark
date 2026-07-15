@@ -44,6 +44,7 @@ class PublicProtocolTests(unittest.TestCase):
         aggregation = build_public_protocol()["aggregation"]
 
         self.assertIn("four suite means", aggregation["track_score"])
+        self.assertIn("sample-id rotation", aggregation["field_vote"])
         self.assertIn("100 - absolute", aggregation["counterfactual_consistency"])
         self.assertIn("2,000-resample", aggregation["confidence_interval"])
 
