@@ -90,7 +90,7 @@ def build_public_protocol() -> dict:
     return {
         "schema_version": 1,
         "benchmark_version": BENCHMARK_VERSION,
-        "profile": "pilot-12",
+        "profile": "core-20",
         "reference_generation_config": REFERENCE_GENERATION_CONFIG,
         "generation_repair_policy": {
             "trigger": "The final response is empty because hidden thinking exhausted the 1024-token reference budget.",
@@ -110,7 +110,7 @@ def build_public_protocol() -> dict:
                 "self_judge_replacement": "qwen3.5:397b",
                 "rule": (
                     "Replace an evaluated model when it appears in the primary panel; "
-                    "never allow self-judging."
+                    "keep all three judges independent, and never allow self-judging."
                 ),
             },
             "system_prompt": JUDGE_SYSTEM,
@@ -136,8 +136,8 @@ def build_public_protocol() -> dict:
             "minimum_field_agreement": 0.8,
             "field_vote": "Categorical majority vote per field; a tie leaves the response unscored.",
             "track_score": "Mean scored responses within each of four suites, then equally average the four suite means.",
-            "language_tracks": "Spanish and English are scored and ranked separately.",
-            "coverage": "A language track is ranked only when all six pilot prompts are scored and all four suites are present.",
+            "language_tracks": "The release has one English track.",
+            "coverage": "The English track is ranked only when all twenty prompts are scored and all four suites are present.",
             "counterfactual_consistency": "For each complete mirrored pair: 100 - absolute(score a_to_b - score b_to_a); then average pairs.",
             "confidence_interval": "Deterministic 2,000-resample bootstrap over scored response scores with seed 42.",
         },
