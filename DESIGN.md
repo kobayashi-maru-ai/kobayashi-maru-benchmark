@@ -93,16 +93,19 @@ surface. Never use glow, glassmorphism, floating panels, or layered card stacks.
 Do:
 
 - Lead with methodology and disclosure.
-- Keep ES and EN scores separate.
-- Show coverage, verification, judge agreement, and review rate beside scores.
+- Keep the public protocol and interface English-only.
+- Show coverage, verification, and three-judge agreement beside scores.
 - Publish exact prompt and judge text verbatim.
 - Use native semantic HTML, visible focus, and 44px touch targets.
 - Preserve an original KM identity even when taking layout cues from ARC Prize.
+- Use Star Trek references only as attributed editorial context; licensed or
+  public-domain imagery must include its source.
 
 Do not:
 
 - Copy ARC Prize code, logo, wording, task graphics, or exact page composition.
-- Copy the Enterprise, Starfleet insignia, LCARS, registry numbers, or Trek fonts.
+- Copy the Enterprise, Starfleet insignia, LCARS, registry numbers, Trek fonts, or
+  franchise trade dress.
 - Present provisional results as verified or as a general ethics score.
 - Use cyan/purple AI gradients, gradient text, glow, or ornamental sparklines.
 - Wrap every paragraph in a card or repeat giant number/stat blocks.

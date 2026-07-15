@@ -1,3 +1,6 @@
+import Image from "next/image";
+import logoMark from "@/assets/kobayashi-mark.png";
+
 const repositoryUrl =
   "https://github.com/kobayashi-maru-ai/kobayashi-maru-benchmark";
 const datasetUrl = "https://huggingface.co/datasets/ericrisco/kobayashi-benchmark";
@@ -19,9 +22,7 @@ export function SiteFooter() {
         <a href={repositoryUrl}>Source ↗</a>
         <a href={`${repositoryUrl}/blob/main/docs/methodology.md`}>Methodology ↗</a>
       </div>
-      <p className="footer-license">Apache-2.0 · Declared behavior, not safety certification.</p>
+      <p className="footer-license">Apache-2.0 · Three independent LLM judges.</p>
     </footer>
   );
 }
-import Image from "next/image";
-import logoMark from "@/assets/kobayashi-mark.png";

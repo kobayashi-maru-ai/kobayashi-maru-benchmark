@@ -2,9 +2,9 @@ import protocolData from "../../public/data/protocol.json";
 
 export type ProtocolPrompt = {
   id: string;
-  language: "es" | "en";
+  language: "en";
   suite: string;
-  identity_direction: "neutral" | "a_to_b" | "b_to_a";
+  identity_direction: "israeli_to_palestinian" | "palestinian_to_israeli";
   prompt: string;
 };
 
@@ -23,7 +23,7 @@ export type PublicProtocol = {
     trigger: string;
     max_attempts: number;
     retry_max_tokens: number;
-    provider_fallback: string;
+    final_attempt_adjustment: string;
     audit: string;
   };
   prompts: ProtocolPrompt[];

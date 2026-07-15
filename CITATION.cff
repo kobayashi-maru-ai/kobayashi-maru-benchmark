@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "If you use Kobayashi Benchmark, please cite this software and its versioned dataset."
 title: "Kobayashi Benchmark"
 type: software
-version: 0.2.0
-date-released: 2026-07-14
+version: 0.3.0
+date-released: 2026-07-15
 authors:
   - family-names: Risco
     given-names: Eric

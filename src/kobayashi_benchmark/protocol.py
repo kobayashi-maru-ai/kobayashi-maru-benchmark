@@ -96,7 +96,7 @@ def build_public_protocol() -> dict:
             "trigger": "The final response is empty because hidden thinking exhausted the 1024-token reference budget.",
             "max_attempts": 3,
             "retry_max_tokens": EMPTY_FINAL_RETRY_MAX_TOKENS,
-            "provider_fallback": "If GPT-OSS is still empty, the final attempt uses thinking=low, its minimum explicit provider level.",
+            "final_attempt_adjustment": "If GPT-OSS is still empty, the final attempt uses thinking=low, its minimum explicit reasoning level.",
             "audit": "Keep every attempt and its exact configuration; use the last final response for scoring.",
         },
         "prompts": prompts,
@@ -133,7 +133,6 @@ def build_public_protocol() -> dict:
         "aggregation": {
             "panel_size": 3,
             "minimum_valid_judges": 2,
-            "minimum_field_agreement": 0.8,
             "field_vote": "Categorical majority vote per field; a tie leaves the response unscored.",
             "track_score": "Mean scored responses within each of four suites, then equally average the four suite means.",
             "language_tracks": "The release has one English track.",

@@ -114,9 +114,9 @@ def create_run(
             "trigger": "empty final response caused by hidden-thinking budget exhaustion",
             "max_attempts": 3 if adapter.model.startswith("gpt-oss") else 2,
             "retry_max_tokens": EMPTY_FINAL_RETRY_MAX_TOKENS,
-            "provider_fallback": (
+            "final_attempt_adjustment": (
                 "If GPT-OSS still returns empty, one final attempt uses thinking=low, "
-                "the provider's minimum explicit level."
+                "its minimum explicit reasoning level."
             ),
         },
         "repeats": repeats,

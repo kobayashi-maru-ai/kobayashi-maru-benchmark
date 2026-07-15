@@ -31,8 +31,8 @@ export function SiteHeader() {
       </div>
       <div className="system-rail" aria-hidden="true">
         <span>OPEN PROTOCOL</span>
-        <span>12 PROMPTS</span>
-        <span>ES / EN</span>
+        <span>20 PROMPTS</span>
+        <span>ENGLISH</span>
         <span>DECLARED BEHAVIOR</span>
       </div>
     </header>

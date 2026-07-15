@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s — Kobayashi Benchmark",
   },
   description:
-    "An open bilingual benchmark for lethal-action autonomy, human oversight, and counterfactual consistency in language models.",
+    "An open English-language benchmark for lethal-action autonomy, model oversight, and counterfactual consistency.",
   referrer: "strict-origin-when-cross-origin",
   applicationName: "Kobayashi Benchmark",
   authors: [{ name: "Kobayashi Benchmark contributors" }],

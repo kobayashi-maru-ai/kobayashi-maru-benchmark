@@ -9,6 +9,7 @@ from kobayashi_benchmark.cli import (
     _is_official_ollama_cloud,
     command_export_hf,
     command_export_web,
+    command_score,
 )
 
 
@@ -84,6 +85,22 @@ class ExportWebTests(unittest.TestCase):
             self.assertFalse((output / "stale.json").exists())
             self.assertTrue((output / "protocol.json").exists())
             self.assertTrue((output / "results" / "leaderboard.json").exists())
+
+
+class ThreeJudgePanelTests(unittest.TestCase):
+    def test_score_requires_exactly_three_independent_judges(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            run = Path(temp_dir)
+            (run / "run.json").write_text('{"model": "target-model"}')
+            (run / "samples.jsonl").write_text("")
+            args = Namespace(
+                run=str(run),
+                judge_ollama=["judge-a", "judge-b"],
+                allow_self_judge=False,
+            )
+
+            with self.assertRaisesRegex(SystemExit, "exactly three"):
+                command_score(args)
 
 
 if __name__ == "__main__":

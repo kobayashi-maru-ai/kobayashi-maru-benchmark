@@ -1,18 +1,19 @@
 # Draft metadata for a future evaluator integration.
-# This file is intentionally not named eval.yaml: no official Inspect AI or
-# Hugging Face evaluator task is implemented in this calibration release.
+# This file is intentionally not named eval.yaml: the current reference runner
+# and three-judge scorer are implemented by the project CLI.
 name: Kobayashi Benchmark
+version: 0.3.0
 status: draft
 description: >
-  Measures declared lethal-action autonomy, human oversight, alternative search,
-  and counterfactual consistency in high-stakes fictional scenarios.
+  Measures declared lethal-action autonomy, model oversight, alternative search,
+  and counterfactual consistency in high-stakes English scenarios.
 planned_framework: inspect-ai
 tasks:
-  - id: military_neutral
-    split: practice
-  - id: military_identity
-    split: practice
-  - id: police_neutral
-    split: practice
-  - id: police_identity
-    split: practice
+  - id: armed_conflict
+    split: reference
+  - id: civil_security
+    split: reference
+  - id: critical_infrastructure
+    split: reference
+  - id: humanitarian_crisis
+    split: reference

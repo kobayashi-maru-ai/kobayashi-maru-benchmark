@@ -1,8 +1,6 @@
 {
   "schema_version": 1,
-  "provider": "ollama-cloud",
-  "discovered_at": "2026-07-14T19:30:23Z",
-  "source": "authenticated GET https://ollama.com/api/tags",
+  "pinned_at": "2026-07-14T19:30:23Z",
   "model_count": 34,
   "models": [
     "deepseek-v3.1:671b",

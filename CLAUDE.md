@@ -14,12 +14,12 @@ canónico del proyecto.
 - Objetivos interactivos de al menos 44px; navegación cápsula, tablas y reglas planas.
 - Cero sombras decorativas, glow, glassmorphism o tarjetas genéricas.
 - Contenido 1232px; columna editorial 752px; evidencia puede abrirse a 1088px.
-- ES y EN siempre separados; provisional, cobertura y revisión humana explícitos.
+- Interfaz y protocolo públicos sólo en inglés; cobertura y acuerdo de tres jueces explícitos.
 - Responsive móvil conserva navegación, caveats y métricas críticas; no las oculta.
 - Foco visible `#FFDA5A`, contraste WCAG AA y `prefers-reduced-motion` obligatorios.
 
 **Don'ts críticos:** cumplir `DESIGN.md §7`, incluida la prohibición de copiar
-logos o código de ARC Prize, copiar Star Trek, usar glow o presentar scores
+logos o código de ARC Prize, copiar la identidad visual de Star Trek, usar glow o presentar scores
 provisionales como verificados.
 
 If a user request contradicts `DESIGN.md`, flag it and propose the aligned version
@@ -61,7 +61,7 @@ managed by uv; the web package is managed by pnpm.
 uv sync
 .venv/bin/python -m unittest discover -s tests -v
 .venv/bin/kobayashi dataset build --output benchmark/dist
-.venv/bin/kobayashi run --adapter ollama --model <model> --profile pilot-12
+.venv/bin/kobayashi run --adapter ollama --model <model> --profile core-20
 .venv/bin/kobayashi score --run <run-dir> --judge-ollama <judge>
 pnpm install
 pnpm web:dev

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { LeaderboardEntry } from "@/lib/types";
 
-type LanguageFilter = "all" | "en" | "es";
 type CoverageFilter = "all" | "complete";
 
 function displayScore(entry: LeaderboardEntry) {
@@ -20,17 +19,14 @@ function formatNumber(value: number | null, digits = 2) {
 }
 
 export function Leaderboard({ entries }: { entries: LeaderboardEntry[] }) {
-  const [language, setLanguage] = useState<LanguageFilter>("all");
   const [coverage, setCoverage] = useState<CoverageFilter>("all");
 
   const visibleEntries = useMemo(
     () =>
       entries.filter(
-        (entry) =>
-          (language === "all" || entry.language === language) &&
-          (coverage === "all" || entry.coverage_status === "complete"),
+        (entry) => coverage === "all" || entry.coverage_status === "complete",
       ),
-    [coverage, entries, language],
+    [coverage, entries],
   );
 
   const rankedTrackIds = visibleEntries
@@ -40,20 +36,7 @@ export function Leaderboard({ entries }: { entries: LeaderboardEntry[] }) {
   return (
     <div className="leaderboard-console">
       <div className="filter-bar" aria-label="Leaderboard filters">
-        <div className="filter-group" aria-label="Language track">
-          <span className="filter-label">Track</span>
-          {(["all", "en", "es"] as const).map((value) => (
-            <button
-              className="filter-button"
-              type="button"
-              aria-pressed={language === value}
-              key={value}
-              onClick={() => setLanguage(value)}
-            >
-              {value === "all" ? "All" : value.toUpperCase()}
-            </button>
-          ))}
-        </div>
+        <p className="filter-track">ENGLISH TRACK · 20 PROMPTS · THREE JUDGES</p>
         <div className="filter-group" aria-label="Coverage">
           <span className="filter-label">Coverage</span>
           {(["all", "complete"] as const).map((value) => (
@@ -121,11 +104,6 @@ export function Leaderboard({ entries }: { entries: LeaderboardEntry[] }) {
                     <Link className="audit-link" href={`/runs/${entry.run_id}`}>
                       Inspect run <span aria-hidden="true">→</span>
                     </Link>
-                    {entry.human_review_rate > 0 && (
-                      <span className="review-note">
-                        {formatNumber(entry.human_review_rate, 1)}% review
-                      </span>
-                    )}
                   </td>
                 </tr>
               );

@@ -14,9 +14,8 @@ pnpm web:lint
 ## Scenario changes
 
 Do not edit a published benchmark version. Create a new version and include
-mirrored counterfactual cases, Spanish and English renderings, prompt-paraphrase
-tests, a rubric revision, and a changelog entry. Material facts must remain
-identical across identity swaps.
+English mirrored counterfactual cases, dataset-invariant tests, a rubric revision,
+and a changelog entry. Material facts must remain identical across identity swaps.
 
 ## Result submissions
 
@@ -28,4 +27,4 @@ submissions are displayed as self-reported and cannot become verified.
 ## Pull requests
 
 Keep changes focused, explain methodology changes explicitly, and run every
-local check above. Never commit credentials or a blind calibration answer key.
+local check above. Never commit credentials or private endpoint configuration.

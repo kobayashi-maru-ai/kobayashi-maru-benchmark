@@ -46,7 +46,6 @@ function SampleRecord({ sample }: { sample: PublicRunSample }) {
             {sample.generation_repair.attempts.length} attempts
           </span>
         )}
-        {sample.needs_human_review && <span className="sample-review">Review</span>}
       </summary>
       <div className="sample-body">
         <section aria-labelledby={`${sample.sample_id}-prompt`}>
@@ -120,7 +119,7 @@ export default async function RunDetailPage({ params }: PageProps) {
   const publicRun = await getPublicRun(runId);
   if (!publicRun) notFound();
   const { run, samples, summary } = publicRun;
-  const sourceUrl = `https://github.com/kobayashi-maru-ai/kobayashi-maru-benchmark/tree/v0.2.0/results/runs/${runId}`;
+  const sourceUrl = `https://github.com/kobayashi-maru-ai/kobayashi-maru-benchmark/tree/v0.3.0/results/runs/${runId}`;
 
   return (
     <main id="main-content">
@@ -142,10 +141,6 @@ export default async function RunDetailPage({ params }: PageProps) {
             <dd>{run.run_id}</dd>
           </div>
           <div>
-            <dt>Provider</dt>
-            <dd>{run.provider}</dd>
-          </div>
-          <div>
             <dt>Benchmark</dt>
             <dd>v{run.benchmark_version}</dd>
           </div>
@@ -160,7 +155,7 @@ export default async function RunDetailPage({ params }: PageProps) {
         <div className="section-heading section-heading--compact">
           <div>
             <p className="channel-label">TRACK SUMMARY</p>
-            <h2 id="track-summary-title">Separated by language</h2>
+            <h2 id="track-summary-title">English protocol track</h2>
           </div>
           <a className="audit-link" href={sourceUrl}>
             Open immutable source files ↗
@@ -189,10 +184,6 @@ export default async function RunDetailPage({ params }: PageProps) {
                 <div>
                   <dt>Consistency</dt>
                   <dd>{formatScore(track.counterfactual_consistency)}%</dd>
-                </div>
-                <div>
-                  <dt>Human review</dt>
-                  <dd>{formatScore(track.human_review_rate)}%</dd>
                 </div>
               </dl>
             </article>

@@ -178,9 +178,9 @@ def command_repair_empty(args) -> int:
         "trigger": "empty final response caused by hidden-thinking budget exhaustion",
         "max_attempts": 3 if adapter.model.startswith("gpt-oss") else 2,
         "retry_max_tokens": EMPTY_FINAL_RETRY_MAX_TOKENS,
-        "provider_fallback": (
+        "final_attempt_adjustment": (
             "If GPT-OSS still returns empty, one final attempt uses thinking=low, "
-            "the provider's minimum explicit level."
+            "its minimum explicit reasoning level."
         ),
     }
     manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
@@ -193,6 +193,8 @@ def command_score(args) -> int:
     manifest_path = run_dir / "run.json"
     manifest = json.loads(manifest_path.read_text())
     rows = [json.loads(line) for line in (run_dir / "samples.jsonl").read_text().splitlines()]
+    if len(args.judge_ollama) != 3 or len(set(args.judge_ollama)) != 3:
+        raise SystemExit("Scoring requires exactly three distinct --judge-ollama models")
     if not args.allow_self_judge and manifest["model"] in args.judge_ollama:
         raise SystemExit(
             f"Refusing self-judging panel: {manifest['model']} is the evaluated model"
@@ -212,8 +214,6 @@ def command_score(args) -> int:
         )
         for model in args.judge_ollama
     ]
-    if not judges:
-        raise SystemExit("Provide at least one --judge-ollama model")
     if args.min_judges < 1 or args.min_judges > len(judges):
         raise SystemExit("--min-judges must be between 1 and the panel size")
     if args.judge_max_attempts < 1:
@@ -336,7 +336,6 @@ def command_score(args) -> int:
             "judge_models": [judge.model for judge in judges],
             "scoring_policy": {
                 "min_judges": args.min_judges,
-                "min_agreement": args.min_agreement,
                 "self_judging_allowed": args.allow_self_judge,
                 "invalid_json_max_attempts": args.judge_max_attempts,
                 "judge_generation": {
@@ -583,7 +582,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="Retry once when a judge response is not valid rubric JSON.",
     )
     score.add_argument("--min-judges", type=int, default=2)
-    score.add_argument("--min-agreement", type=float, default=0.8)
     score.add_argument("--allow-self-judge", action="store_true")
     score.set_defaults(func=command_score)
 

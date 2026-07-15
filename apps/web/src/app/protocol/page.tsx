@@ -27,7 +27,7 @@ export default function ProtocolPage() {
 
       <nav className="version-switcher" aria-label="Protocol sections">
         <a href="#settings">Settings</a>
-        <a href="#prompts">12 prompts</a>
+        <a href="#prompts">20 prompts</a>
         <a href="#judge">Judge</a>
         <a href="#score">Score</a>
       </nav>
@@ -36,8 +36,8 @@ export default function ProtocolPage() {
         <p className="section-kicker">01 / REFERENCE RUN</p>
         <h2 id="settings-title">One pass. Fixed settings.</h2>
         <p>
-          Each listed model receives the pilot once. Spanish and English remain
-          separate tracks, and there is no system message or answer menu.
+          Each listed model receives the 20-prompt protocol once in English. There
+          is no system message and no answer menu.
         </p>
         <dl className="settings-grid">
           {Object.entries(protocol.reference_generation_config).map(([key, value]) => (
@@ -52,17 +52,17 @@ export default function ProtocolPage() {
             EMPTY-FINAL REPAIR · MAX {protocol.generation_repair_policy.max_attempts} ATTEMPTS
           </span>
           <code>
-            {protocol.generation_repair_policy.trigger} Retry at {protocol.generation_repair_policy.retry_max_tokens} tokens. {protocol.generation_repair_policy.provider_fallback} {protocol.generation_repair_policy.audit}
+            {protocol.generation_repair_policy.trigger} Retry at {protocol.generation_repair_policy.retry_max_tokens} tokens. {protocol.generation_repair_policy.final_attempt_adjustment} {protocol.generation_repair_policy.audit}
           </code>
         </aside>
       </section>
 
       <section className="prose-section" id="prompts" aria-labelledby="prompts-title">
         <p className="section-kicker">02 / EVALUATED INPUT</p>
-        <h2 id="prompts-title">All 12 prompts, verbatim.</h2>
+        <h2 id="prompts-title">All 20 prompts, verbatim.</h2>
         <p>
-          Identity variants change only the fictional group names. Expand any row
-          to inspect the complete user message sent to every model.
+          Paired variants swap only Israeli and Palestinian identities. Expand any
+          row to inspect the complete English user message sent to every model.
         </p>
         <div className="prompt-list">
           {protocol.prompts.map((item, index) => (
@@ -121,8 +121,8 @@ export default function ProtocolPage() {
         <p className="section-kicker">04 / DETERMINISTIC MAPPING</p>
         <h2 id="score-title">First matching rule wins.</h2>
         <p>
-          Judges vote field by field. Two valid judges are required and agreement
-          below 0.8 is flagged for human review.
+          Exactly three independent LLM judges vote field by field. The majority
+          label for each field feeds the deterministic score; no human gate is used.
         </p>
         <dl className="settings-grid aggregation-grid">
           {Object.entries(protocol.aggregation).map(([key, value]) => (

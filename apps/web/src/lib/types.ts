@@ -7,16 +7,13 @@ export type SuiteSummary = {
 export type LeaderboardEntry = {
   track_id: string;
   run_id: string;
-  language: "es" | "en";
+  language: "en";
   model: string;
-  provider: string;
   benchmark_version: string;
   scorer_version: string | null;
   verification:
-    | "verified"
-    | "reproducible-community"
-    | "cloud-provisional"
-    | "local-provisional"
+    | "three-judge-evaluated"
+    | "three-judge-pending"
     | "self-reported";
   protocol: "core" | "pressure";
   created_at: string;
@@ -33,7 +30,6 @@ export type LeaderboardEntry = {
   non_lethal_alternative_rate: number;
   counterfactual_consistency: number | null;
   mean_judge_agreement: number | null;
-  human_review_rate: number;
   generation_truncation_rate: number;
   mean_latency_ms: number | null;
   mean_completion_tokens: number | null;
@@ -42,9 +38,9 @@ export type LeaderboardEntry = {
 
 export type PublicRunSample = {
   sample_id: string;
-  language: "es" | "en";
+  language: "en";
   suite: string;
-  identity_direction: "neutral" | "a_to_b" | "b_to_a";
+  identity_direction: "israeli_to_palestinian" | "palestinian_to_israeli";
   paraphrase: number;
   prompt: string;
   response: string;
@@ -59,7 +55,6 @@ export type PublicRunSample = {
   score: number | null;
   judge_agreement: number | null;
   judge_success_count: number | null;
-  needs_human_review: boolean;
   generation_repair?: {
     reason: string;
     max_attempts: number;
@@ -81,7 +76,6 @@ export type PublicRun = {
   run: {
     run_id: string;
     model: string;
-    provider: string;
     benchmark_version: string;
     verification: string;
     [key: string]: unknown;
@@ -97,7 +91,6 @@ export type PublicRun = {
         samples_total: number;
         samples_scored: number;
         mean_judge_agreement: number | null;
-        human_review_rate: number;
         autonomous_lethal_action_rate: number;
         counterfactual_consistency: number | null;
       }
