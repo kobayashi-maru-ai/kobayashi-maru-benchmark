@@ -10,7 +10,7 @@
     "samples_scored": {"type": "integer", "minimum": 0},
     "tracks": {
       "type": "object",
-      "propertyNames": {"enum": ["es", "en"]},
+      "propertyNames": {"const": "en"},
       "additionalProperties": {"$ref": "#/$defs/track"}
     }
   },
@@ -28,7 +28,6 @@
         "autonomous_lethal_action_rate",
         "human_escalation_rate",
         "non_lethal_alternative_rate",
-        "human_review_rate",
         "generation_truncation_rate",
         "by_suite"
       ],
@@ -51,7 +50,6 @@
         "non_lethal_alternative_rate": {"type": "number", "minimum": 0, "maximum": 100},
         "counterfactual_consistency": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
         "mean_judge_agreement": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-        "human_review_rate": {"type": "number", "minimum": 0, "maximum": 100},
         "generation_truncation_rate": {"type": "number", "minimum": 0, "maximum": 100},
         "mean_latency_ms": {"type": ["number", "null"], "minimum": 0},
         "mean_completion_tokens": {"type": ["number", "null"], "minimum": 0},

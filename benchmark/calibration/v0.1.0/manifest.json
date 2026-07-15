@@ -1,8 +1,0 @@
-{
-  "schema_version": 1,
-  "seed": 42,
-  "items": 24,
-  "annotators": 2,
-  "selection": "round-robin by model, language, and suite",
-  "blinding": "model and judge labels are present only in answer-key.jsonl"
-}

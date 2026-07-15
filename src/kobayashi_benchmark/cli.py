@@ -11,8 +11,14 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from .adapters import OllamaAdapter, OpenAICompatibleAdapter
-from .calibration import build_calibration_pack, calibration_report
-from .dataset import BENCHMARK_ROOT, build_samples, filter_samples, pilot_samples, write_dataset
+from .dataset import (
+    BENCHMARK_ROOT,
+    BENCHMARK_VERSION,
+    build_samples,
+    filter_samples,
+    pilot_samples,
+    write_dataset,
+)
 from .models import GenerationConfig, GenerationResult
 from .protocol import build_public_protocol
 from .reporting import build_leaderboard, build_public_run, summarize
@@ -27,7 +33,7 @@ from .scoring import (
     validate_labels,
 )
 
-SCORER_VERSION = "0.2.0"
+SCORER_VERSION = "0.3.0"
 
 
 def _is_official_ollama_cloud(base_url: str) -> bool:
@@ -94,7 +100,7 @@ def command_run(args) -> int:
         languages=set(args.language) if args.language else None,
         paraphrases=set(args.paraphrase) if args.paraphrase else None,
     )
-    if args.profile == "pilot-12":
+    if args.profile == "core-20":
         samples = pilot_samples(samples)
     if args.limit:
         samples = samples[: args.limit]
@@ -305,14 +311,12 @@ def command_score(args) -> int:
                 if len(successful_labels) >= args.min_judges
                 else (None, 0.0)
             )
-            needs_human_review = labels is None or agreement < args.min_agreement
             row.update(
                 {
                     "judges": [trace for _label, trace in judgements],
                     "labels": labels.to_dict() if labels else None,
                     "judge_agreement": agreement if labels else None,
                     "judge_success_count": len(successful_labels),
-                    "needs_human_review": needs_human_review,
                     "score": kobayashi_score(labels, pressure_stage) if labels else None,
                 }
             )
@@ -343,6 +347,7 @@ def command_score(args) -> int:
                     "thinking": "low for gpt-oss; disabled otherwise",
                 },
             },
+            "verification": "three-judge-evaluated",
         }
     )
     manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
@@ -430,14 +435,13 @@ def command_export_hf(args) -> int:
         )
         exported_runs += 1
     shutil.copyfile(
-        BENCHMARK_ROOT / "rubrics" / "v0.1.0.json",
-        output / "rubric-v0.1.0.json",
+        BENCHMARK_ROOT / "rubrics" / f"v{BENCHMARK_VERSION}.json",
+        output / f"rubric-v{BENCHMARK_VERSION}.json",
     )
     readme = f"""---
 pretty_name: Kobayashi Benchmark
 license: apache-2.0
 language:
-  - es
   - en
 task_categories:
   - text-generation
@@ -453,15 +457,15 @@ size_categories:
 # Kobayashi Benchmark
 
 Kobayashi measures declared lethal-action autonomy, human oversight, alternative
-search, and counterfactual consistency in fictional high-stakes scenarios.
+search, and counterfactual consistency in high-stakes command scenarios.
 
-**Version:** 0.1.0 calibration release  
+**Version:** {BENCHMARK_VERSION} three-judge release  
 **Dataset ID prepared for:** `{args.dataset_id}`
 
 This release contains {sum(counts.values())} practice samples across four suites.
-Spanish and English are separate tracks. Scores are provisional until the judge
-is calibrated against human labels. The benchmark does not certify that a model
-is ethical, safe, or suitable for real-world deployment.
+All prompts are in English. Each answer is classified by three independent LLM
+judges. The benchmark does not certify that a model is ethical, safe, or suitable
+for real-world deployment.
 
 ## Configurations
 
@@ -475,15 +479,17 @@ is ethical, safe, or suitable for real-world deployment.
 ## Files
 
 - `data/*.jsonl`: versioned public practice samples.
-- `rubric-v0.1.0.json`: observable labels and score mapping.
-- `protocol.json`: exact pilot prompts, judge messages, and deterministic rules.
-- `results/leaderboard.json`: provisional reference leaderboard.
+- `rubric-v{BENCHMARK_VERSION}.json`: observable labels and score mapping.
+- `protocol.json`: exact 20 prompts, judge messages, and deterministic rules.
+- `results/leaderboard.json`: model leaderboard.
 - `results/runs/*.json`: sanitized model responses, labels, and per-run evidence.
 
 ## Responsible use
 
-The prompts contain fictional descriptions of lethal action. Do not connect this
-benchmark or its models to physical actuators or operational decision systems.
+The prompts contain descriptions of lethal action and real-world identities. They
+are controlled counterfactual tests, not factual claims about either community.
+Do not connect this benchmark or its models to physical actuators or operational
+decision systems.
 """
     (output / "README.md").write_text(readme)
     print(
@@ -496,29 +502,6 @@ benchmark or its models to physical actuators or operational decision systems.
             indent=2,
         )
     )
-    return 0
-
-
-def command_calibration_build(args) -> int:
-    manifest = build_calibration_pack(
-        Path(args.results).glob("*"),
-        Path(args.output),
-        limit=args.limit,
-        annotators=args.annotators,
-        seed=args.seed,
-    )
-    print(json.dumps(manifest, indent=2, ensure_ascii=False))
-    return 0
-
-
-def command_calibration_report(args) -> int:
-    report = calibration_report(
-        [Path(path) for path in args.annotations], Path(args.answer_key)
-    )
-    output = Path(args.output)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
-    print(json.dumps(report, indent=2, ensure_ascii=False))
     return 0
 
 
@@ -543,14 +526,14 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--model-revision")
     run.add_argument("--quantization")
     run.add_argument("--suite", action="append")
-    run.add_argument("--language", choices=("es", "en"), action="append")
-    run.add_argument("--paraphrase", choices=(1, 2, 3), type=int, action="append")
+    run.add_argument("--language", choices=("en",), action="append")
+    run.add_argument("--paraphrase", choices=(1,), type=int, action="append")
     run.add_argument("--limit", type=int)
     run.add_argument(
         "--profile",
-        choices=("full", "pilot-12"),
-        default="full",
-        help="Use the full filtered set or a balanced 12-sample pilot.",
+        choices=("full", "core-20"),
+        default="core-20",
+        help="Use the complete 20-sample English protocol.",
     )
     run.add_argument("--repeats", type=int, default=1)
     run.add_argument(
@@ -630,31 +613,6 @@ def build_parser() -> argparse.ArgumentParser:
     export_hf.add_argument("--output", default="dist/huggingface")
     export_hf.set_defaults(func=command_export_hf)
 
-    calibration = subparsers.add_parser(
-        "calibration", help="Build and analyse blind human-label calibration packs"
-    )
-    calibration_sub = calibration.add_subparsers(
-        dest="calibration_command", required=True
-    )
-    calibration_build = calibration_sub.add_parser("build")
-    calibration_build.add_argument("--results", default="results/runs")
-    calibration_build.add_argument(
-        "--output", default="benchmark/calibration/v0.1.0"
-    )
-    calibration_build.add_argument("--limit", type=int, default=48)
-    calibration_build.add_argument("--annotators", type=int, default=2)
-    calibration_build.add_argument("--seed", type=int, default=42)
-    calibration_build.set_defaults(func=command_calibration_build)
-
-    calibration_report_parser = calibration_sub.add_parser("report")
-    calibration_report_parser.add_argument(
-        "--annotations", action="append", required=True
-    )
-    calibration_report_parser.add_argument("--answer-key", required=True)
-    calibration_report_parser.add_argument(
-        "--output", default="benchmark/calibration/v0.1.0/report.json"
-    )
-    calibration_report_parser.set_defaults(func=command_calibration_report)
     return parser
 
 

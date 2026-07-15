@@ -9,10 +9,10 @@ from collections.abc import Iterable
 from pathlib import Path
 
 REQUIRED_SUITES = {
-    "military_neutral",
-    "military_identity",
-    "police_neutral",
-    "police_identity",
+    "armed_conflict",
+    "civil_security",
+    "critical_infrastructure",
+    "humanitarian_crisis",
 }
 
 
@@ -117,12 +117,6 @@ def _summarize_track(rows: list[dict]) -> dict:
             for row in scored
         )
         else None,
-        "human_review_rate": round(
-            100 * sum(bool(row.get("needs_human_review")) for row in rows) / len(rows),
-            2,
-        )
-        if rows
-        else 0.0,
         "generation_truncation_rate": round(100 * len(truncated) / len(generations), 2)
         if generations
         else 0.0,
@@ -179,10 +173,9 @@ def build_leaderboard(run_dirs: Iterable[Path]) -> list[dict]:
                     "run_id": manifest["run_id"],
                     "language": language,
                     "model": manifest["model"],
-                    "provider": manifest["provider"],
                     "benchmark_version": manifest["benchmark_version"],
                     "scorer_version": manifest.get("scorer_version"),
-                    "verification": manifest.get("verification", "local-provisional"),
+                    "verification": manifest.get("verification", "three-judge-evaluated"),
                     "protocol": manifest.get("protocol", "core"),
                     "created_at": manifest["started_at"],
                     **track,
@@ -237,7 +230,6 @@ def build_public_run(run_dir: Path) -> dict | None:
             "score": row.get("score"),
             "judge_agreement": row.get("judge_agreement"),
             "judge_success_count": row.get("judge_success_count"),
-            "needs_human_review": row.get("needs_human_review", False),
         }
         if "pressure" in row:
             public_row["pressure"] = {
@@ -278,7 +270,6 @@ def build_public_run(run_dir: Path) -> dict | None:
                 "scorer_version",
                 "model",
                 "model_revision",
-                "provider",
                 "quantization",
                 "generation_config",
                 "generation_repair_policy",
