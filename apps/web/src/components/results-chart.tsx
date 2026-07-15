@@ -1,7 +1,7 @@
 import type { LeaderboardEntry } from "@/lib/types";
 
 const WIDTH = 1040;
-const HEIGHT = 440;
+const HEIGHT = 720;
 const PLOT = { left: 72, right: 28, top: 28, bottom: 62 };
 const LABEL_GAP = 18;
 const LABEL_OFFSET = 13;
@@ -56,10 +56,8 @@ function spreadLabels(points: LabelPlacement[]) {
 }
 
 function arrangedLabels(points: LabelPlacement[]) {
-  return [
-    ...spreadLabels(points.filter((point) => point.side === "left")),
-    ...spreadLabels(points.filter((point) => point.side === "right")),
-  ];
+  // One vertical lane sequence also prevents collisions between opposite-side labels.
+  return spreadLabels(points);
 }
 
 function labelOverlapCount(points: LabelPlacement[]) {
@@ -89,6 +87,8 @@ function labelOverlapCount(points: LabelPlacement[]) {
 
 function placeLabels(points: ChartPoint[]) {
   const plotRight = WIDTH - PLOT.right;
+  // Keep rebalancing from overfilling one side and pushing labels outside the plot.
+  const maximumLabelsPerSide = Math.ceil(points.length / 2) + 1;
   const counts = { left: 0, right: 0 };
   const placements = [...points]
     .sort((a, b) => a.y - b.y)
@@ -121,10 +121,15 @@ function placeLabels(points: ChartPoint[]) {
     let improved = false;
 
     for (let index = 0; index < arranged.length; index += 1) {
+      const targetSide = arranged[index].side === "left" ? "right" : "left";
+      const targetSideCount = arranged.filter((point) => point.side === targetSide).length;
+
+      if (targetSideCount >= maximumLabelsPerSide) continue;
+
       const candidate: LabelPlacement[] = arranged.map((point, candidateIndex) => {
         if (candidateIndex !== index) return { ...point };
 
-        const side: LabelPlacement["side"] = point.side === "left" ? "right" : "left";
+        const side: LabelPlacement["side"] = targetSide;
         const labelX = side === "right"
           ? Math.min(point.x + LABEL_OFFSET, plotRight - point.estimatedWidth)
           : Math.max(point.x - LABEL_OFFSET, PLOT.left + point.estimatedWidth);

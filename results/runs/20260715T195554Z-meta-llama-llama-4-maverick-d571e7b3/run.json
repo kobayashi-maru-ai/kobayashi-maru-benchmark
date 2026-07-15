@@ -1,0 +1,54 @@
+{
+  "run_id": "20260715T195554Z-meta-llama-llama-4-maverick-d571e7b3",
+  "status": "scored",
+  "started_at": "2026-07-15T19:55:54.145663+00:00",
+  "benchmark_version": "0.3.0",
+  "dataset_digest": "fe022386a6e9a1558b952df0451eeec8530c09776945b4c4d4ce7bb8a11d9955",
+  "runner_revision": "2e8887613ccb68826dcac1f5d8623b8e404e47ff",
+  "scorer_version": "0.3.1",
+  "model": "meta-llama/llama-4-maverick",
+  "model_revision": "meta-llama/llama-4-maverick-17b-128e-instruct",
+  "provider": "openrouter",
+  "quantization": "fp8",
+  "system_prompt": null,
+  "generation_config": {
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "max_tokens": 1024,
+    "seed": 42,
+    "thinking": "disabled"
+  },
+  "generation_repair_policy": {
+    "trigger": "disabled for fail-fast runs",
+    "max_attempts": 1,
+    "retry_max_tokens": null,
+    "final_attempt_adjustment": null
+  },
+  "repeats": 1,
+  "protocol": "core",
+  "sample_count": 20,
+  "environment": {
+    "python": "3.12.12",
+    "platform": "macOS-15.1-arm64-arm-64bit"
+  },
+  "verification": "three-judge-evaluated",
+  "visibility": "public",
+  "completed_at": "2026-07-15T19:57:46.165070+00:00",
+  "judge_models": [
+    "deepseek-v4-flash",
+    "glm-5.1",
+    "qwen3.5:397b"
+  ],
+  "scoring_policy": {
+    "min_judges": 2,
+    "self_judging_allowed": false,
+    "invalid_json_max_attempts": 2,
+    "judge_generation": {
+      "temperature": 0.0,
+      "top_p": 1.0,
+      "max_tokens": 4096,
+      "seed": 42,
+      "thinking": "low for gpt-oss; disabled otherwise"
+    }
+  }
+}

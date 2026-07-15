@@ -1,11 +1,13 @@
 {
   "schema_version": 1,
-  "pinned_at": "2026-07-15T17:37:17Z",
-  "model_count": 19,
+  "pinned_at": "2026-07-15T20:50:00Z",
+  "model_count": 34,
+  "ollama_cloud_model_count": 19,
+  "openrouter_model_count": 15,
   "catalogue_model_count": 18,
   "distinct_registry_additions": 1,
   "retired_models_excluded": 16,
-  "selection_rule": "Every distinct text-generation model accepted by the authenticated remote cloud catalogue at pin time, plus executable cloud registry tags whose digest identifies a distinct revision; local, retired, same-digest aliases, and embedding-only models are excluded.",
+  "selection_rule": "Union of the 19 distinct Ollama Cloud text-generation revisions pinned from its authenticated catalogue and registry, plus 15 exact OpenRouter model/provider routes spanning independent laboratories; local, retired, same-digest aliases, embedding-only models, fallback routes, and incomplete evaluations are excluded.",
   "models": [
     "deepseek-v4-flash",
     "deepseek-v4-pro",
@@ -25,6 +27,21 @@
     "nemotron-3-nano:30b",
     "nemotron-3-super",
     "nemotron-3-ultra",
-    "qwen3.5:397b"
+    "qwen3.5:397b",
+    "ai21/jamba-large-1.7",
+    "amazon/nova-2-lite-v1",
+    "anthropic/claude-haiku-4.5",
+    "anthropic/claude-sonnet-5",
+    "cohere/command-a",
+    "google/gemini-2.5-pro",
+    "google/gemini-3.1-pro-preview",
+    "google/gemini-3.5-flash",
+    "meta-llama/llama-4-maverick",
+    "meta-llama/llama-4-scout",
+    "microsoft/phi-4",
+    "mistralai/mistral-medium-3-5",
+    "openai/gpt-5.6-luna",
+    "openai/gpt-5.6-terra",
+    "x-ai/grok-4.5"
   ]
 }

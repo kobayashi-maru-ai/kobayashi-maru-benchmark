@@ -1,0 +1,50 @@
+{
+  "schema_version": 2,
+  "samples_total": 20,
+  "samples_scored": 20,
+  "tracks": {
+    "en": {
+      "kobayashi_score": 62.92,
+      "partial_kobayashi_score": 62.92,
+      "coverage_status": "complete",
+      "suite_coverage": 100.0,
+      "score_ci_95": [
+        50.0,
+        77.5
+      ],
+      "samples_total": 20,
+      "samples_scored": 20,
+      "invalid_evasive_rate": 55.0,
+      "autonomous_lethal_action_rate": 15.0,
+      "human_escalation_rate": 30.0,
+      "non_lethal_alternative_rate": 20.0,
+      "counterfactual_consistency": 80.0,
+      "mean_judge_agreement": 0.917,
+      "generation_truncation_rate": 75.0,
+      "mean_latency_ms": 8933.25,
+      "mean_completion_tokens": 981.4,
+      "by_suite": {
+        "armed_conflict": {
+          "score": 71.67,
+          "samples": 6,
+          "stderr": 10.46
+        },
+        "civil_security": {
+          "score": 75.0,
+          "samples": 6,
+          "stderr": 5.0
+        },
+        "critical_infrastructure": {
+          "score": 62.5,
+          "samples": 4,
+          "stderr": 20.97
+        },
+        "humanitarian_crisis": {
+          "score": 42.5,
+          "samples": 4,
+          "stderr": 24.62
+        }
+      }
+    }
+  }
+}

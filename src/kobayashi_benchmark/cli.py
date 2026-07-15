@@ -431,6 +431,7 @@ def command_repair_openrouter_truncated(args) -> int:
         samples=[sample],
         config=repair_config,
         budget=budget,
+        system_prompt=manifest.get("system_prompt"),
     )
     budget.preflight(args.prior_spend_usd + preflight.projected_usd)
     budget.charge(args.prior_spend_usd)
@@ -444,6 +445,7 @@ def command_repair_openrouter_truncated(args) -> int:
     result = OpenRouterAdapter(spec=specs[0], api_key=api_key, budget=budget).generate(
         sample.prompt,
         repair_config,
+        manifest.get("system_prompt"),
     )
     done_reason = result.provider_metadata.get("done_reason")
     if result.error or not result.text.strip() or done_reason == "length":

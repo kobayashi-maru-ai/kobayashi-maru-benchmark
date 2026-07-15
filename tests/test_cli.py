@@ -666,6 +666,7 @@ class OpenRouterSweepTests(unittest.TestCase):
                         "provider": "openrouter",
                         "model": preflight.specs[0].model_id,
                         "model_revision": preflight.specs[0].canonical_slug,
+                        "system_prompt": "stay deterministic",
                         "generation_config": {
                             "temperature": 0.0,
                             "top_p": 1.0,
@@ -699,9 +700,10 @@ class OpenRouterSweepTests(unittest.TestCase):
             def make_adapter(*, spec, api_key, budget):
                 self.assertEqual(api_key, "secret-from-env")
 
-                def generate(prompt, config):
+                def generate(prompt, config, system_prompt):
                     self.assertEqual(prompt, target.prompt)
                     self.assertEqual(config.max_tokens, 4096)
+                    self.assertEqual(system_prompt, "stay deterministic")
                     budget.charge(Decimal("0.02"))
                     return GenerationResult(
                         text="complete decision",
@@ -713,8 +715,16 @@ class OpenRouterSweepTests(unittest.TestCase):
 
                 return SimpleNamespace(generate=generate)
 
+            def preflight_repair(**kwargs):
+                self.assertEqual(kwargs["system_prompt"], "stay deterministic")
+                return preflight
+
             with (
-                patch.object(cli, "preflight_openrouter_cohort", return_value=preflight),
+                patch.object(
+                    cli,
+                    "preflight_openrouter_cohort",
+                    side_effect=preflight_repair,
+                ),
                 patch.object(cli.os, "getenv", return_value="secret-from-env"),
                 patch.object(cli, "OpenRouterAdapter", new=make_adapter),
                 redirect_stdout(output),

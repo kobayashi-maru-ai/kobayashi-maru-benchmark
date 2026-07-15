@@ -45,6 +45,12 @@ def test_results_chart_prints_every_model_name_next_to_its_mark() -> None:
     assert 'className="chart-label-leader"' in chart
 
 
+def test_results_chart_uses_one_tall_label_sequence_to_prevent_cross_side_collisions() -> None:
+    chart = (WEB_SOURCE / "components" / "results-chart.tsx").read_text(encoding="utf-8")
+    assert "const HEIGHT = 720;" in chart
+    assert "return spreadLabels(points);" in chart
+
+
 def test_leaderboard_defaults_to_most_autonomous_lethal_action_first() -> None:
     leaderboard = (WEB_SOURCE / "components" / "leaderboard.tsx").read_text(
         encoding="utf-8"

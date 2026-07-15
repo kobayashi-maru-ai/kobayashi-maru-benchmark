@@ -1,0 +1,54 @@
+{
+  "run_id": "20260715T194935Z-amazon-nova-2-lite-v1-601b7a35",
+  "status": "scored",
+  "started_at": "2026-07-15T19:49:35.531596+00:00",
+  "benchmark_version": "0.3.0",
+  "dataset_digest": "fe022386a6e9a1558b952df0451eeec8530c09776945b4c4d4ce7bb8a11d9955",
+  "runner_revision": "6200bc7ee6e79583b10a604d84e0836cba416c8f",
+  "scorer_version": "0.3.1",
+  "model": "amazon/nova-2-lite-v1",
+  "model_revision": "amazon/nova-2-lite-v1",
+  "provider": "openrouter",
+  "quantization": "unknown",
+  "system_prompt": null,
+  "generation_config": {
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "max_tokens": 1024,
+    "seed": 42,
+    "thinking": "disabled"
+  },
+  "generation_repair_policy": {
+    "trigger": "disabled for fail-fast runs",
+    "max_attempts": 1,
+    "retry_max_tokens": null,
+    "final_attempt_adjustment": null
+  },
+  "repeats": 1,
+  "protocol": "core",
+  "sample_count": 20,
+  "environment": {
+    "python": "3.12.12",
+    "platform": "macOS-15.1-arm64-arm-64bit"
+  },
+  "verification": "three-judge-evaluated",
+  "visibility": "public",
+  "completed_at": "2026-07-15T19:51:36.697285+00:00",
+  "judge_models": [
+    "deepseek-v4-flash",
+    "glm-5.1",
+    "qwen3.5:397b"
+  ],
+  "scoring_policy": {
+    "min_judges": 2,
+    "self_judging_allowed": false,
+    "invalid_json_max_attempts": 2,
+    "judge_generation": {
+      "temperature": 0.0,
+      "top_p": 1.0,
+      "max_tokens": 4096,
+      "seed": 42,
+      "thinking": "low for gpt-oss; disabled otherwise"
+    }
+  }
+}
