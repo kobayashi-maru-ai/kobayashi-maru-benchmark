@@ -1,7 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Leaderboard } from "@/components/leaderboard";
 import { getLeaderboard } from "@/lib/results";
+import logoMark from "@/assets/kobayashi-mark.png";
 
+const repositoryUrl = "https://github.com/kobayashi-maru-ai/kobayashi-maru-benchmark";
 const datasetUrl = "https://huggingface.co/datasets/ericrisco/kobayashi-benchmark";
 
 export default function HomePage() {
@@ -9,159 +12,137 @@ export default function HomePage() {
   const runCount = new Set(entries.map((entry) => entry.run_id)).size;
 
   return (
-    <main id="main-content">
-      <section className="hero section-shell" aria-labelledby="hero-title">
-        <div className="hero-copy">
-          <p className="channel-label">KM–01 / OPEN DECISION PROTOCOL</p>
-          <h1 id="hero-title">
-            No-win prompts.
-            <span>Auditable decisions.</span>
-          </h1>
-          <p className="hero-lede">
-            Kobayashi measures how language models describe lethal-action autonomy,
-            human oversight, and counterfactual consistency—without showing them the
-            judge rubric or forcing a menu of answers.
-          </p>
-          <div className="hero-actions">
-            <a className="button button--primary" href="#results">
-              View provisional results
-            </a>
-            <Link className="button button--secondary" href="/run">
-              Test a model locally
-            </Link>
-          </div>
-        </div>
+    <main id="main-content" className="document-page">
+      <nav className="version-switcher" aria-label="Benchmark sections">
+        <a href="#about">Overview</a>
+        <Link href="/protocol">Protocol</Link>
+        <a href="#leaderboard">Results</a>
+        <Link href="/run">Run it</Link>
+      </nav>
 
-        <aside className="release-panel" aria-label="Release status">
-          <div className="release-panel__head">
-            <span>CALIBRATION RELEASE</span>
-            <span className="status-light" aria-hidden="true" />
-          </div>
-          <dl className="release-grid">
-            <div>
-              <dt>Version</dt>
-              <dd>0.1.0</dd>
-            </div>
-            <div>
-              <dt>Verification</dt>
-              <dd className="text-coral">Local provisional</dd>
-            </div>
-            <div>
-              <dt>Scenarios</dt>
-              <dd>180</dd>
-            </div>
-            <div>
-              <dt>Language tracks</dt>
-              <dd>ES / EN</dd>
-            </div>
-            <div>
-              <dt>Initial runs</dt>
-              <dd>{runCount}</dd>
-            </div>
-            <div>
-              <dt>Judge panel</dt>
-              <dd>3 models</dd>
-            </div>
-          </dl>
-          <p className="release-caveat">
-            Scores measure declared restraint under this protocol. They are not a
-            general ethics score or deployment certification.
-          </p>
-        </aside>
+      <header className="document-hero home-hero">
+        <p className="eyebrow">RESEARCH TERMINAL <span aria-hidden="true" /></p>
+        <h1>Kobayashi Maru</h1>
+        <p className="hero-subtitle">A no-win benchmark for model decisions.</p>
+        <figure className="hero-mark">
+          <Image
+            src={logoMark}
+            alt="KM monogram shaped as a deep-space exploration starship"
+            priority
+            sizes="(max-width: 52rem) 240px, 288px"
+          />
+          <figcaption>KM / EXPLORATION MARK</figcaption>
+        </figure>
+        <dl className="instrument-strip" aria-label="Benchmark status">
+          <div><dt>Protocol</dt><dd>v0.1.0</dd></div>
+          <div><dt>Profile</dt><dd>pilot-12</dd></div>
+          <div><dt>Languages</dt><dd>ES / EN</dd></div>
+          <div><dt>Reference fleet</dt><dd>{runCount} models</dd></div>
+          <div className="instrument-status"><dt>Status</dt><dd>provisional</dd></div>
+        </dl>
+        <div className="hero-links" aria-label="Project links">
+          <h2>Links</h2>
+          <a href="#leaderboard">View Ollama Cloud results</a>
+          <Link href="/protocol">Inspect all 12 prompts</Link>
+          <a href={repositoryUrl}>Official repository ↗</a>
+          <a href={datasetUrl}>Dataset on Hugging Face ↗</a>
+        </div>
+      </header>
+
+      <section className="prose-section" id="about" aria-labelledby="about-title">
+        <p className="section-kicker">ABOUT</p>
+        <h2 id="about-title">The answer stays open.</h2>
+        <p>
+          Kobayashi asks a model to make a decision where every presented path has
+          a severe cost. The model never receives a menu such as “attack”, “wait”,
+          or “escalate”. It chooses its own action, framing, and justification.
+        </p>
+        <p>
+          After generation, three blind judges classify only observable claims.
+          A deterministic mapping turns their field-level consensus into a score.
+          Spanish and English remain independent, and mirrored fictional identities
+          expose decisions that change when only group names are swapped.
+        </p>
+        <p className="inline-link"><Link href="/protocol">› Read the complete protocol</Link></p>
       </section>
 
-      <div className="telemetry-strip" aria-label="Benchmark structure">
-        <span><b>04</b> suites</span>
-        <span><b>10</b> scenario kernels</span>
-        <span><b>03</b> paraphrases</span>
-        <span><b>02</b> mirrored identities</span>
-        <span><b>03</b> independent judges</span>
-      </div>
-
-      <section className="results-section section-shell" id="results" aria-labelledby="results-title">
-        <div className="section-heading">
-          <div>
-            <p className="channel-label">CHANNEL 02 / REFERENCE RUNS</p>
-            <h2 id="results-title">Initial leaderboard</h2>
+      <section className="capability-section" aria-labelledby="capability-title">
+        <p className="section-kicker">CAPABILITY TEST</p>
+        <h2 id="capability-title">What the benchmark probes</h2>
+        <div className="capability-row">
+          <div className="capability-copy">
+            <span>01 / AUTONOMY</span>
+            <h3>Lethal commitment</h3>
+            <p>
+              Does the model independently commit to lethal action, require human
+              authorization, reject it, or construct a non-lethal alternative?
+            </p>
           </div>
-          <p>
-            Spanish and English are independent tracks. Incomplete coverage stays
-            visible for diagnosis but receives no rank.
-          </p>
+          <div className="decision-diagram" aria-label="Decision path illustration">
+            <span>OPEN PROMPT</span><i />
+            <span>FREE RESPONSE</span><i />
+            <span>OBSERVABLE ACTION</span>
+          </div>
         </div>
-        <div className="provisional-banner" role="note">
-          <span>PROVISIONAL</span>
-          <p>
-            Human calibration is not complete. Every low-consensus response is
-            flagged for blind review; no result below is marked verified.
-          </p>
+        <div className="capability-row capability-row--reverse">
+          <div className="capability-copy">
+            <span>02 / CONSISTENCY</span>
+            <h3>Identity counterfactuals</h3>
+            <p>
+              The same dilemma is repeated with fictional group identities reversed.
+              A changed final action is reported as counterfactual inconsistency.
+            </p>
+          </div>
+          <div className="mirror-diagram" aria-label="Mirrored identity illustration">
+            <div><b>A</b><span>authority</span></div>
+            <i>⇄</i>
+            <div><b>B</b><span>target</span></div>
+          </div>
         </div>
+      </section>
+
+      <section className="results-section" id="leaderboard" aria-labelledby="leaderboard-title">
+        <div className="results-heading">
+          <div>
+            <p className="section-kicker">REFERENCE RESULTS</p>
+            <h2 id="leaderboard-title">Ollama Cloud</h2>
+          </div>
+          <p>{runCount} models · one pilot per model · 12 responses each</p>
+        </div>
+        <aside className="status-notice">
+          <strong>PROVISIONAL</strong>
+          <p>
+            Human calibration is incomplete. Scores describe declared behavior in
+            this protocol; they are not an ethics score or safety certification.
+          </p>
+        </aside>
         <Leaderboard entries={entries} />
       </section>
 
-      <section className="method-section section-shell" id="method" aria-labelledby="method-title">
-        <div className="method-intro">
-          <p className="channel-label">CHANNEL 03 / METHOD</p>
-          <h2 id="method-title">The answer stays open.</h2>
-          <p>
-            The evaluated model never sees a list such as “attack” or “refuse.” It
-            must choose its own frame, action, and rationale. Classification happens
-            only after generation.
-          </p>
-          <a href={`${datasetUrl}/blob/main/README.md`}>
-            Read the dataset card <span aria-hidden="true">↗</span>
-          </a>
+      <section className="prose-section" aria-labelledby="structure-title">
+        <p className="section-kicker">DATASET STRUCTURE</p>
+        <h2 id="structure-title">Small pilot, explicit coverage.</h2>
+        <div className="table-frame" tabIndex={0} aria-label="Scrollable dataset structure">
+          <table className="data-table">
+            <thead><tr><th>Slice</th><th>Prompts</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>Military / neutral</td><td>2</td><td>One scenario in ES and EN without identities.</td></tr>
+              <tr><td>Military / identity</td><td>4</td><td>Both fictional identity directions in ES and EN.</td></tr>
+              <tr><td>Police / neutral</td><td>2</td><td>One scenario in ES and EN without identities.</td></tr>
+              <tr><td>Police / identity</td><td>4</td><td>Both fictional identity directions in ES and EN.</td></tr>
+            </tbody>
+          </table>
         </div>
-
-        <ol className="method-sequence">
-          <li>
-            <span className="sequence-index">01</span>
-            <div>
-              <h3>Open fictional prompt</h3>
-              <p>Military or police context, neutral or mirrored fictional identities.</p>
-            </div>
-          </li>
-          <li>
-            <span className="sequence-index">02</span>
-            <div>
-              <h3>Free model response</h3>
-              <p>No answer menu and no judge labels disclosed to the evaluated model.</p>
-            </div>
-          </li>
-          <li>
-            <span className="sequence-index">03</span>
-            <div>
-              <h3>Three blind judges</h3>
-              <p>Observable categories only; self-judging panels are rejected.</p>
-            </div>
-          </li>
-          <li>
-            <span className="sequence-index">04</span>
-            <div>
-              <h3>Deterministic score</h3>
-              <p>Consensus labels map to fixed bands; disagreement triggers human review.</p>
-            </div>
-          </li>
-        </ol>
       </section>
 
-      <section className="open-system section-shell" aria-labelledby="open-title">
-        <div className="open-system__rail" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
-        <div>
-          <p className="channel-label">CHANNEL 04 / REPRODUCE</p>
-          <h2 id="open-title">Bring your own model.</h2>
-        </div>
+      <section className="closing-section" aria-labelledby="closing-title">
+        <p className="section-kicker">REPRODUCE</p>
+        <h2 id="closing-title">Run the same test.</h2>
         <p>
-          Run the same versioned prompts against Ollama or an OpenAI-compatible API.
-          Every response, setting, digest, label, and judge trace remains auditable.
+          The CLI records prompts, raw responses, settings, digests, consensus
+          labels, retry attempts, and individual judge traces.
         </p>
-        <Link className="button button--primary" href="/run">
-          Open run protocol
-        </Link>
+        <Link href="/run">› Open the run guide</Link>
       </section>
     </main>
   );

@@ -6,12 +6,67 @@ import re
 import subprocess
 import uuid
 from collections.abc import Iterable
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 
 from .adapters import ModelAdapter
 from .dataset import BENCHMARK_VERSION, dataset_digest
-from .models import GenerationConfig, Sample
+from .models import GenerationConfig, GenerationResult, Sample
+
+EMPTY_FINAL_RETRY_MAX_TOKENS = 4096
+
+
+def retry_empty_final(
+    adapter: ModelAdapter,
+    prompt: str,
+    config: GenerationConfig,
+    system_prompt: str | None,
+    initial: GenerationResult,
+    prior_repair: dict | None = None,
+) -> tuple[GenerationResult, dict | None]:
+    if not initial.error or "thinking exhausted the generation budget" not in initial.error:
+        return initial, None
+
+    repair_config = replace(
+        config,
+        max_tokens=max(config.max_tokens, EMPTY_FINAL_RETRY_MAX_TOKENS),
+    )
+    if prior_repair:
+        attempts = list(prior_repair["attempts"])
+        attempt_configs = list(
+            prior_repair.get(
+                "attempt_configs",
+                [config.to_dict(), prior_repair["repair_config"]],
+            )
+        )
+        repaired = initial
+    else:
+        attempts = [initial.to_dict()]
+        attempt_configs = [config.to_dict()]
+        repaired = adapter.generate(prompt, repair_config, system_prompt)
+        attempts.append(repaired.to_dict())
+        attempt_configs.append(repair_config.to_dict())
+
+    if (
+        repaired.error
+        and "thinking exhausted the generation budget" in repaired.error
+        and adapter.model.startswith("gpt-oss")
+        and repair_config.thinking == "disabled"
+        and len(attempts) < 3
+    ):
+        repair_config = replace(repair_config, thinking="low")
+        repaired = adapter.generate(prompt, repair_config, system_prompt)
+        attempts.append(repaired.to_dict())
+        attempt_configs.append(repair_config.to_dict())
+
+    return repaired, {
+        "reason": "empty final response after hidden thinking exhausted the reference budget",
+        "max_attempts": 3 if adapter.model.startswith("gpt-oss") else 2,
+        "repair_config": repair_config.to_dict(),
+        "attempt_configs": attempt_configs,
+        "attempts": attempts,
+    }
 
 
 def _git_revision() -> str | None:
@@ -55,11 +110,24 @@ def create_run(
         "quantization": quantization,
         "system_prompt": system_prompt,
         "generation_config": config.to_dict(),
+        "generation_repair_policy": {
+            "trigger": "empty final response caused by hidden-thinking budget exhaustion",
+            "max_attempts": 3 if adapter.model.startswith("gpt-oss") else 2,
+            "retry_max_tokens": EMPTY_FINAL_RETRY_MAX_TOKENS,
+            "provider_fallback": (
+                "If GPT-OSS still returns empty, one final attempt uses thinking=low, "
+                "the provider's minimum explicit level."
+            ),
+        },
         "repeats": repeats,
         "protocol": protocol,
         "sample_count": len(samples) * repeats,
         "environment": {"python": platform.python_version(), "platform": platform.platform()},
-        "verification": "local-provisional",
+        "verification": (
+            "cloud-provisional"
+            if adapter.provider == "ollama-cloud"
+            else "local-provisional"
+        ),
         "visibility": visibility,
     }
     manifest_path = run_dir / "run.json"
@@ -68,12 +136,17 @@ def create_run(
     with samples_path.open("w", encoding="utf-8") as handle:
         for epoch in range(1, repeats + 1):
             for sample in samples:
-                result = adapter.generate(sample.prompt, config, system_prompt)
+                initial = adapter.generate(sample.prompt, config, system_prompt)
+                result, repair = retry_empty_final(
+                    adapter, sample.prompt, config, system_prompt, initial
+                )
                 row = {
                     "sample": sample.to_dict(),
                     "epoch": epoch,
                     "generation": result.to_dict(),
                 }
+                if repair:
+                    row["generation_repair"] = repair
                 if protocol == "pressure" and not result.error and result.text.strip():
                     if sample.language == "es":
                         followup = (
@@ -93,11 +166,22 @@ def create_run(
                         f"{sample.prompt}\n\nYour previous response was:\n[BEGIN PREVIOUS RESPONSE]\n"
                         f"{result.text}\n[END PREVIOUS RESPONSE]\n\n{followup}"
                     )
-                    pressure_result = adapter.generate(pressure_prompt, config, system_prompt)
+                    pressure_initial = adapter.generate(
+                        pressure_prompt, config, system_prompt
+                    )
+                    pressure_result, pressure_repair = retry_empty_final(
+                        adapter,
+                        pressure_prompt,
+                        config,
+                        system_prompt,
+                        pressure_initial,
+                    )
                     row["pressure"] = {
                         "prompt": followup,
                         "generation": pressure_result.to_dict(),
                     }
+                    if pressure_repair:
+                        row["pressure"]["generation_repair"] = pressure_repair
                 handle.write(json.dumps(row, ensure_ascii=False) + "\n")
                 handle.flush()
     manifest["status"] = "generated"

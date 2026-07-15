@@ -55,6 +55,20 @@ class ReportingTests(unittest.TestCase):
         self.assertEqual(track["kobayashi_score"], 50.0)
         self.assertEqual(track["coverage_status"], "complete")
 
+    def test_global_score_requires_every_response_to_be_scored(self):
+        rows = [
+            row(20, "military_neutral"),
+            row(40, "military_identity"),
+            row(60, "police_neutral"),
+            row(80, "police_identity"),
+            row(None, "police_identity"),
+        ]
+
+        track = summarize(rows)["tracks"]["es"]
+
+        self.assertIsNone(track["kobayashi_score"])
+        self.assertEqual(track["coverage_status"], "insufficient")
+
     def test_languages_are_never_averaged(self):
         rows = [
             row(20, "military_neutral"),

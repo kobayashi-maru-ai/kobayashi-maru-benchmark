@@ -34,6 +34,7 @@ def _post_json(url: str, payload: dict, headers: dict[str, str], timeout: int) -
 class OllamaAdapter:
     model: str
     base_url: str = "http://127.0.0.1:11434"
+    api_key: str | None = None
     timeout: int = 300
     provider: str = "ollama"
 
@@ -51,6 +52,7 @@ class OllamaAdapter:
                 think = True
             elif config.thinking in {"low", "medium", "high"}:
                 think = config.thinking
+            headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
             data = _post_json(
                 f"{self.base_url.rstrip('/')}/api/chat",
                 {
@@ -65,7 +67,7 @@ class OllamaAdapter:
                         "num_predict": config.max_tokens,
                     },
                 },
-                {},
+                headers,
                 self.timeout,
             )
             message = data.get("message", {})

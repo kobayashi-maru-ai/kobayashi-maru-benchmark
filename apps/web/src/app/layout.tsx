@@ -1,10 +1,9 @@
-import "@fontsource/barlow-condensed/latin-500.css";
-import "@fontsource/barlow-condensed/latin-600.css";
+import "@fontsource/space-grotesk/latin-400.css";
+import "@fontsource/space-grotesk/latin-500.css";
+import "@fontsource/space-grotesk/latin-600.css";
+import "@fontsource/space-grotesk/latin-700.css";
 import "@fontsource/ibm-plex-mono/latin-400.css";
 import "@fontsource/ibm-plex-mono/latin-500.css";
-import "@fontsource/ibm-plex-sans/latin-400.css";
-import "@fontsource/ibm-plex-sans/latin-500.css";
-import "@fontsource/ibm-plex-sans/latin-600.css";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/site-footer";
@@ -38,7 +37,7 @@ export const metadata: Metadata = {
     siteName: "Kobayashi Benchmark",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Kobayashi Benchmark",
     description:
       "Open evidence for how language models respond to fictional no-win decisions.",
@@ -50,7 +49,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   colorScheme: "dark",
-  themeColor: "#0B1118",
+  themeColor: "#090A0B",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

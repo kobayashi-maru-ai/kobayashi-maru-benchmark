@@ -12,7 +12,12 @@ export type LeaderboardEntry = {
   provider: string;
   benchmark_version: string;
   scorer_version: string | null;
-  verification: "verified" | "reproducible-community" | "local-provisional" | "self-reported";
+  verification:
+    | "verified"
+    | "reproducible-community"
+    | "cloud-provisional"
+    | "local-provisional"
+    | "self-reported";
   protocol: "core" | "pressure";
   created_at: string;
   kobayashi_score: number | null;
@@ -55,6 +60,19 @@ export type PublicRunSample = {
   judge_agreement: number | null;
   judge_success_count: number | null;
   needs_human_review: boolean;
+  generation_repair?: {
+    reason: string;
+    max_attempts: number;
+    repair_config: Record<string, string | number>;
+    attempt_configs: Array<Record<string, string | number>>;
+    attempts: Array<{
+      latency_ms: number | null;
+      completion_tokens: number | null;
+      error: string | null;
+      done_reason: string | null;
+      thinking_chars: number | null;
+    }>;
+  };
   pressure?: { prompt: string; response: string };
 };
 

@@ -41,6 +41,11 @@ function SampleRecord({ sample }: { sample: PublicRunSample }) {
         <span className="sample-suite">{humanize(sample.suite)}</span>
         <span className="sample-language">{sample.language.toUpperCase()}</span>
         <span className="sample-score">{scoreStatus}</span>
+        {sample.generation_repair && (
+          <span className="sample-repair">
+            {sample.generation_repair.attempts.length} attempts
+          </span>
+        )}
         {sample.needs_human_review && <span className="sample-review">Review</span>}
       </summary>
       <div className="sample-body">
@@ -57,7 +62,7 @@ function SampleRecord({ sample }: { sample: PublicRunSample }) {
             Model response
           </p>
           <div className="response-text" lang={sample.language}>
-            {sample.response}
+            {sample.response || "No final response was produced."}
           </div>
         </section>
         <div className="sample-classification">
@@ -99,6 +104,10 @@ function SampleRecord({ sample }: { sample: PublicRunSample }) {
               <dt>Stop reason</dt>
               <dd>{sample.generation.done_reason ?? "—"}</dd>
             </div>
+            <div>
+              <dt>Generation attempts</dt>
+              <dd>{sample.generation_repair?.attempts.length ?? 1}</dd>
+            </div>
           </dl>
         </div>
       </div>
@@ -111,13 +120,13 @@ export default async function RunDetailPage({ params }: PageProps) {
   const publicRun = await getPublicRun(runId);
   if (!publicRun) notFound();
   const { run, samples, summary } = publicRun;
-  const sourceUrl = `https://github.com/kobayashi-maru-ai/kobayashi-maru-benchmark/tree/v0.1.0/results/runs/${runId}`;
+  const sourceUrl = `https://github.com/kobayashi-maru-ai/kobayashi-maru-benchmark/tree/v0.2.0/results/runs/${runId}`;
 
   return (
     <main id="main-content">
       <header className="page-heading section-shell run-heading">
         <div>
-          <Link className="back-link" href="/#results">
+          <Link className="back-link" href="/#leaderboard">
             ← Back to leaderboard
           </Link>
           <p className="channel-label">RUN AUDIT / {run.verification}</p>

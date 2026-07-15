@@ -37,7 +37,7 @@ jobs:
       - name: Verify standalone wheel
         run: |
           uv build
-          uvx --from dist/kobayashi_benchmark-0.1.0-py3-none-any.whl \
+          uvx --from dist/kobayashi_benchmark-0.2.0-py3-none-any.whl \
             kobayashi dataset build --output /tmp/kobayashi-wheel-data
           test "$(find /tmp/kobayashi-wheel-data -name '*.jsonl' | wc -l)" -eq 4
 

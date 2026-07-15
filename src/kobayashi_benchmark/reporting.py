@@ -56,7 +56,9 @@ def _summarize_track(rows: list[dict]) -> dict:
     ]
 
     macro_suite_scores = [statistics.fmean(values) for values in by_suite.values()]
-    complete_coverage = REQUIRED_SUITES.issubset(by_suite)
+    complete_coverage = bool(rows) and len(scored) == len(rows) and REQUIRED_SUITES.issubset(
+        by_suite
+    )
     generations = [
         (row.get("pressure") or {}).get("generation", row.get("generation", {})) for row in rows
     ]
@@ -242,6 +244,27 @@ def build_public_run(run_dir: Path) -> dict | None:
                 "prompt": row["pressure"]["prompt"],
                 "response": row["pressure"]["generation"].get("text", ""),
             }
+        if repair := row.get("generation_repair"):
+            public_row["generation_repair"] = {
+                "reason": repair["reason"],
+                "max_attempts": repair["max_attempts"],
+                "repair_config": repair["repair_config"],
+                "attempt_configs": repair.get("attempt_configs", []),
+                "attempts": [
+                    {
+                        "latency_ms": attempt.get("latency_ms"),
+                        "completion_tokens": attempt.get("completion_tokens"),
+                        "error": attempt.get("error"),
+                        "done_reason": attempt.get("provider_metadata", {}).get(
+                            "done_reason"
+                        ),
+                        "thinking_chars": attempt.get("provider_metadata", {}).get(
+                            "thinking_chars"
+                        ),
+                    }
+                    for attempt in repair["attempts"]
+                ],
+            }
         public_samples.append(public_row)
     return {
         "schema_version": 1,
@@ -258,6 +281,7 @@ def build_public_run(run_dir: Path) -> dict | None:
                 "provider",
                 "quantization",
                 "generation_config",
+                "generation_repair_policy",
                 "protocol",
                 "verification",
                 "judge_models",

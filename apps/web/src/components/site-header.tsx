@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import logoMark from "@/assets/kobayashi-mark.png";
 
 const repositoryUrl =
   "https://github.com/kobayashi-maru-ai/kobayashi-maru-benchmark";
@@ -6,30 +8,32 @@ const repositoryUrl =
 export function SiteHeader() {
   return (
     <header className="site-header">
-      <div className="header-rail" aria-hidden="true">
-        <span className="rail-segment rail-segment--amber" />
-        <span className="rail-segment rail-segment--coral" />
-        <span className="rail-segment rail-segment--orchid" />
-        <span className="rail-segment rail-segment--quiet" />
-      </div>
       <div className="header-inner">
         <Link className="wordmark" href="/">
-          <span className="wordmark-mark" aria-hidden="true">
-            K
-          </span>
-          <span>
-            Kobayashi
-            <small>Open benchmark / KM–01</small>
-          </span>
+          <Image
+            className="wordmark-image"
+            src={logoMark}
+            alt=""
+            priority
+            sizes="52px"
+          />
+          <strong>KOBAYASHI<br />MARU</strong>
         </Link>
         <nav className="command-nav" aria-label="Primary navigation">
-          <Link href="/#results">Results</Link>
-          <Link href="/#method">Method</Link>
-          <Link href="/run">Run locally</Link>
+          <Link href="/#about">About</Link>
+          <Link href="/#leaderboard">Leaderboard</Link>
+          <Link href="/protocol">Protocol</Link>
+          <Link href="/run">Run</Link>
           <a href={repositoryUrl} rel="noreferrer">
             GitHub <span aria-hidden="true">↗</span>
           </a>
         </nav>
+      </div>
+      <div className="system-rail" aria-hidden="true">
+        <span>OPEN PROTOCOL</span>
+        <span>12 PROMPTS</span>
+        <span>ES / EN</span>
+        <span>DECLARED BEHAVIOR</span>
       </div>
     </header>
   );

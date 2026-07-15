@@ -8,14 +8,49 @@ import re
 import shutil
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from .adapters import OllamaAdapter, OpenAICompatibleAdapter
 from .calibration import build_calibration_pack, calibration_report
 from .dataset import BENCHMARK_ROOT, build_samples, filter_samples, pilot_samples, write_dataset
-from .models import GenerationConfig
+from .models import GenerationConfig, GenerationResult
+from .protocol import build_public_protocol
 from .reporting import build_leaderboard, build_public_run, summarize
-from .runner import create_run
-from .scoring import classify_with_judge, kobayashi_score, majority_labels, validate_labels
+from .runner import EMPTY_FINAL_RETRY_MAX_TOKENS, create_run, retry_empty_final
+from .scoring import (
+    JUDGE_MAX_TOKENS,
+    JUDGE_SYSTEM,
+    classify_with_judge,
+    judge_prompt,
+    kobayashi_score,
+    majority_labels,
+    validate_labels,
+)
+
+SCORER_VERSION = "0.2.0"
+
+
+def _is_official_ollama_cloud(base_url: str) -> bool:
+    try:
+        parsed = urlsplit(base_url)
+        port = parsed.port
+    except ValueError:
+        return False
+    return (
+        parsed.scheme == "https"
+        and parsed.hostname == "ollama.com"
+        and port in {None, 443}
+        and parsed.path.rstrip("/") == ""
+        and not parsed.query
+        and not parsed.fragment
+    )
+
+
+def _ollama_api_key(base_url: str, explicit_env: str | None) -> str | None:
+    api_key_env = explicit_env or (
+        "OLLAMA_API_KEY" if _is_official_ollama_cloud(base_url) else None
+    )
+    return os.getenv(api_key_env) if api_key_env else None
 
 
 def _adapter(args, prefix: str = ""):
@@ -23,8 +58,21 @@ def _adapter(args, prefix: str = ""):
     model = getattr(args, f"{prefix}model")
     base_url = getattr(args, f"{prefix}base_url", None)
     if adapter_name == "ollama":
-        return OllamaAdapter(model=model, base_url=base_url or "http://127.0.0.1:11434")
-    api_key = os.getenv(getattr(args, f"{prefix}api_key_env", "OPENAI_API_KEY"))
+        resolved_base_url = base_url or "http://127.0.0.1:11434"
+        return OllamaAdapter(
+            model=model,
+            base_url=resolved_base_url,
+            api_key=_ollama_api_key(
+                resolved_base_url, getattr(args, f"{prefix}api_key_env", None)
+            ),
+            provider=(
+                "ollama-cloud"
+                if _is_official_ollama_cloud(resolved_base_url)
+                else "ollama"
+            ),
+        )
+    api_key_env = getattr(args, f"{prefix}api_key_env", None) or "OPENAI_API_KEY"
+    api_key = os.getenv(api_key_env)
     return OpenAICompatibleAdapter(
         model=model,
         base_url=base_url or "https://api.openai.com/v1",
@@ -74,6 +122,66 @@ def command_run(args) -> int:
     return 0
 
 
+def command_repair_empty(args) -> int:
+    run_dir = Path(args.run)
+    manifest_path = run_dir / "run.json"
+    samples_path = run_dir / "samples.jsonl"
+    manifest = json.loads(manifest_path.read_text())
+    if manifest.get("provider") not in {"ollama", "ollama-cloud"}:
+        raise SystemExit("repair-empty currently supports Ollama runs only")
+    if manifest.get("scorer_version") is not None:
+        raise SystemExit("Repair generation errors before scoring the run")
+
+    adapter = OllamaAdapter(
+        model=manifest["model"],
+        base_url=args.base_url,
+        api_key=_ollama_api_key(args.base_url, args.api_key_env),
+        provider=(
+            "ollama-cloud" if _is_official_ollama_cloud(args.base_url) else "ollama"
+        ),
+    )
+    config = GenerationConfig(**manifest["generation_config"])
+    rows = [json.loads(line) for line in samples_path.read_text().splitlines()]
+    repaired_count = 0
+    for row in rows:
+        prior_repair = row.get("generation_repair")
+        if prior_repair and not prior_repair.get("attempt_configs"):
+            prior_repair["attempt_configs"] = [
+                config.to_dict(),
+                prior_repair["repair_config"],
+            ]
+        initial = row["generation"]
+        initial_result = GenerationResult(**initial)
+        result, repair = retry_empty_final(
+            adapter,
+            row["sample"]["prompt"],
+            config,
+            manifest.get("system_prompt"),
+            initial_result,
+            prior_repair=prior_repair,
+        )
+        if repair:
+            row["generation"] = result.to_dict()
+            row["generation_repair"] = repair
+            repaired_count += 1
+
+    with samples_path.open("w", encoding="utf-8") as handle:
+        for row in rows:
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+    manifest["generation_repair_policy"] = {
+        "trigger": "empty final response caused by hidden-thinking budget exhaustion",
+        "max_attempts": 3 if adapter.model.startswith("gpt-oss") else 2,
+        "retry_max_tokens": EMPTY_FINAL_RETRY_MAX_TOKENS,
+        "provider_fallback": (
+            "If GPT-OSS still returns empty, one final attempt uses thinking=low, "
+            "the provider's minimum explicit level."
+        ),
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+    print(json.dumps({"run": manifest["run_id"], "repaired_samples": repaired_count}))
+    return 0
+
+
 def command_score(args) -> int:
     run_dir = Path(args.run)
     manifest_path = run_dir / "run.json"
@@ -83,17 +191,30 @@ def command_score(args) -> int:
         raise SystemExit(
             f"Refusing self-judging panel: {manifest['model']} is the evaluated model"
         )
+    judge_api_key = _ollama_api_key(args.judge_base_url, args.judge_api_key_env)
+    judge_provider = (
+        "ollama-cloud"
+        if _is_official_ollama_cloud(args.judge_base_url)
+        else "ollama"
+    )
     judges = [
-        OllamaAdapter(model=model, base_url=args.judge_base_url)
+        OllamaAdapter(
+            model=model,
+            base_url=args.judge_base_url,
+            api_key=judge_api_key,
+            provider=judge_provider,
+        )
         for model in args.judge_ollama
     ]
     if not judges:
         raise SystemExit("Provide at least one --judge-ollama model")
     if args.min_judges < 1 or args.min_judges > len(judges):
         raise SystemExit("--min-judges must be between 1 and the panel size")
+    if args.judge_max_attempts < 1:
+        raise SystemExit("--judge-max-attempts must be at least 1")
 
     judgements_by_row: list[list[tuple]] = [[] for _row in rows]
-    traces_root = run_dir / "judge-traces" / "v0.1.0"
+    traces_root = run_dir / "judge-traces" / f"v{SCORER_VERSION}"
     traces_root.mkdir(parents=True, exist_ok=True)
     for judge_index, judge in enumerate(judges, start=1):
         safe_judge = re.sub(r"[^a-zA-Z0-9_.-]+", "-", judge.model).strip("-")
@@ -115,15 +236,17 @@ def command_score(args) -> int:
                     "epoch": row.get("epoch", 1),
                     "pressure_stage": pressure_stage,
                     "response_sha256": hashlib.sha256(response.encode()).hexdigest(),
+                    "judge_protocol_sha256": hashlib.sha256(
+                        (JUDGE_SYSTEM + "\n" + judge_prompt(
+                            row["sample"]["prompt"], response, pressure_stage
+                        )).encode()
+                    ).hexdigest(),
                 }
                 cached_row = cached[row_index] if row_index < len(cached) else None
-                if cached_row and all(cached_row.get(key) == value for key, value in cache_key.items()):
-                    label_data = cached_row.get("label")
-                    judgement = (
-                        validate_labels(label_data) if label_data is not None else None,
-                        cached_row["trace"],
-                    )
-                elif generation.get("error") or not response:
+                cached_matches = cached_row and all(
+                    cached_row.get(key) == value for key, value in cache_key.items()
+                )
+                if generation.get("error") or not response:
                     judgement = (
                         None,
                         {
@@ -132,12 +255,19 @@ def command_score(args) -> int:
                             "skipped": "generation unavailable",
                         },
                     )
+                elif cached_matches and cached_row.get("label") is not None:
+                    label_data = cached_row.get("label")
+                    judgement = (
+                        validate_labels(label_data),
+                        cached_row["trace"],
+                    )
                 else:
                     judgement = classify_with_judge(
                         judge,
                         row["sample"]["prompt"],
                         response,
                         pressure_stage,
+                        max_attempts=args.judge_max_attempts,
                     )
                 label, trace = judgement
                 trace_handle.write(
@@ -198,12 +328,20 @@ def command_score(args) -> int:
     manifest.update(
         {
             "status": "scored",
-            "scorer_version": "0.1.0",
+            "scorer_version": SCORER_VERSION,
             "judge_models": [judge.model for judge in judges],
             "scoring_policy": {
                 "min_judges": args.min_judges,
                 "min_agreement": args.min_agreement,
                 "self_judging_allowed": args.allow_self_judge,
+                "invalid_json_max_attempts": args.judge_max_attempts,
+                "judge_generation": {
+                    "temperature": 0.0,
+                    "top_p": 1.0,
+                    "max_tokens": JUDGE_MAX_TOKENS,
+                    "seed": 42,
+                    "thinking": "low for gpt-oss; disabled otherwise",
+                },
             },
         }
     )
@@ -224,11 +362,16 @@ def command_leaderboard(args) -> int:
 def command_export_web(args) -> int:
     output = Path(args.output)
     runs_output = output / "runs"
+    if runs_output.exists():
+        shutil.rmtree(runs_output)
     runs_output.mkdir(parents=True, exist_ok=True)
     run_dirs = list(Path(args.results).glob("*"))
     leaderboard = build_leaderboard(run_dirs)
     (output / "leaderboard.json").write_text(
         json.dumps(leaderboard, indent=2, ensure_ascii=False) + "\n"
+    )
+    (output / "protocol.json").write_text(
+        json.dumps(build_public_protocol(), indent=2, ensure_ascii=False) + "\n"
     )
     exported = 0
     for run_dir in run_dirs:
@@ -261,14 +404,31 @@ def command_summarize(args) -> int:
 
 def command_export_hf(args) -> int:
     output = Path(args.output)
+    if output.exists():
+        shutil.rmtree(output)
     data_dir = output / "data"
     results_dir = output / "results"
+    public_runs_dir = results_dir / "runs"
     counts = write_dataset(data_dir, build_samples())
-    results_dir.mkdir(parents=True, exist_ok=True)
-    leaderboard = build_leaderboard(Path(args.results).glob("*"))
+    public_runs_dir.mkdir(parents=True, exist_ok=True)
+    run_dirs = list(Path(args.results).glob("*"))
+    leaderboard = build_leaderboard(run_dirs)
     (results_dir / "leaderboard.json").write_text(
         json.dumps(leaderboard, indent=2, ensure_ascii=False) + "\n"
     )
+    (output / "protocol.json").write_text(
+        json.dumps(build_public_protocol(), indent=2, ensure_ascii=False) + "\n"
+    )
+    exported_runs = 0
+    for run_dir in run_dirs:
+        public_run = build_public_run(run_dir)
+        if public_run is None:
+            continue
+        run_id = public_run["run"]["run_id"]
+        (public_runs_dir / f"{run_id}.json").write_text(
+            json.dumps(public_run, indent=2, ensure_ascii=False) + "\n"
+        )
+        exported_runs += 1
     shutil.copyfile(
         BENCHMARK_ROOT / "rubrics" / "v0.1.0.json",
         output / "rubric-v0.1.0.json",
@@ -316,7 +476,9 @@ is ethical, safe, or suitable for real-world deployment.
 
 - `data/*.jsonl`: versioned public practice samples.
 - `rubric-v0.1.0.json`: observable labels and score mapping.
-- `results/leaderboard.json`: local provisional reference runs.
+- `protocol.json`: exact pilot prompts, judge messages, and deterministic rules.
+- `results/leaderboard.json`: provisional reference leaderboard.
+- `results/runs/*.json`: sanitized model responses, labels, and per-run evidence.
 
 ## Responsible use
 
@@ -329,7 +491,7 @@ benchmark or its models to physical actuators or operational decision systems.
             {
                 "output": str(output),
                 "samples": sum(counts.values()),
-                "runs": len(leaderboard),
+                "runs": exported_runs,
             },
             indent=2,
         )
@@ -374,7 +536,10 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--adapter", choices=("ollama", "openai-compatible"), required=True)
     run.add_argument("--model", required=True)
     run.add_argument("--base-url")
-    run.add_argument("--api-key-env", default="OPENAI_API_KEY")
+    run.add_argument(
+        "--api-key-env",
+        help="Environment variable containing the provider API key.",
+    )
     run.add_argument("--model-revision")
     run.add_argument("--quantization")
     run.add_argument("--suite", action="append")
@@ -414,10 +579,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run.set_defaults(func=command_run)
 
+    repair_empty = subparsers.add_parser(
+        "repair-empty",
+        help="Retry only empty responses caused by hidden-thinking budget exhaustion",
+    )
+    repair_empty.add_argument("--run", required=True)
+    repair_empty.add_argument("--base-url", default="http://127.0.0.1:11434")
+    repair_empty.add_argument("--api-key-env")
+    repair_empty.set_defaults(func=command_repair_empty)
+
     score = subparsers.add_parser("score", help="Score a completed run")
     score.add_argument("--run", required=True)
     score.add_argument("--judge-ollama", action="append", default=[])
     score.add_argument("--judge-base-url", default="http://127.0.0.1:11434")
+    score.add_argument("--judge-api-key-env")
+    score.add_argument(
+        "--judge-max-attempts",
+        type=int,
+        default=2,
+        help="Retry once when a judge response is not valid rubric JSON.",
+    )
     score.add_argument("--min-judges", type=int, default=2)
     score.add_argument("--min-agreement", type=float, default=0.8)
     score.add_argument("--allow-self-judge", action="store_true")

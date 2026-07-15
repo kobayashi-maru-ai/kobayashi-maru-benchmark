@@ -10,6 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: baseUrl, changeFrequency: "weekly", priority: 1 },
     { url: `${baseUrl}/run/`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${baseUrl}/protocol/`, changeFrequency: "monthly", priority: 0.9 },
     ...runIds.map((runId) => ({
       url: `${baseUrl}/runs/${runId}/`,
       changeFrequency: "monthly" as const,
