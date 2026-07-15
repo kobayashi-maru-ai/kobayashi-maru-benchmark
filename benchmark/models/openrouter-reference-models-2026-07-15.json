@@ -1,19 +1,19 @@
 {
   "schema_version": 1,
-  "pinned_at": "2026-07-15T18:55:00Z",
+  "pinned_at": "2026-07-15T19:20:00Z",
   "benchmark_version": "0.3.0",
   "profile": "core-20",
   "model_count": 15,
   "models": [
     {
-      "model_id": "openai/gpt-5.6-sol",
-      "canonical_slug": "openai/gpt-5.6-sol-20260709",
-      "endpoint_tag": "azure",
-      "provider_name": "Azure",
+      "model_id": "openai/gpt-5.6-terra",
+      "canonical_slug": "openai/gpt-5.6-terra-20260709",
+      "endpoint_tag": "openai",
+      "provider_name": "OpenAI",
       "quantization": "unknown",
-      "request_parameters": ["max_completion_tokens", "seed", "reasoning"],
+      "request_parameters": ["max_tokens", "seed", "reasoning"],
       "reasoning": {"effort": "none", "exclude": true},
-      "price_snapshot": {"prompt": "0.000005", "completion": "0.00003"}
+      "price_snapshot": {"prompt": "0.0000025", "completion": "0.000015"}
     },
     {
       "model_id": "openai/gpt-5.6-luna",
