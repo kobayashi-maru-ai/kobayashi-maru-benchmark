@@ -208,7 +208,7 @@ def load_cohort_manifest(
         )
 
     specs = tuple(_manifest_spec(entry, index) for index, entry in enumerate(models))
-    for field in ("model_id", "canonical_slug", "endpoint_tag"):
+    for field in ("model_id", "canonical_slug"):
         values = [getattr(spec, field) for spec in specs]
         if len(set(values)) != len(values):
             raise OpenRouterManifestError(f"manifest {field} values must be unique")
