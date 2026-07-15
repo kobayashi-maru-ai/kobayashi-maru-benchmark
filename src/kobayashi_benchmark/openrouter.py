@@ -16,6 +16,7 @@ from .models import GenerationConfig
 OPENROUTER_API_BASE = "https://openrouter.ai/api/v1"
 _ERROR_LIMIT = 240
 _MAX_PUBLIC_RESPONSE_BYTES = 10 * 1024 * 1024
+_COHORT_MODEL_COUNT = 15
 _REQUIRED_MODEL_FIELDS = (
     "model_id",
     "canonical_slug",
@@ -167,7 +168,7 @@ def _manifest_spec(entry: object, index: int) -> OpenRouterModelSpec:
 
 
 def load_cohort_manifest(
-    path: str | Path, expected_count: int = 15
+    path: str | Path, expected_count: int = _COHORT_MODEL_COUNT
 ) -> tuple[OpenRouterModelSpec, ...]:
     """Load and strictly validate a pinned OpenRouter cohort manifest."""
 
@@ -177,6 +178,10 @@ def load_cohort_manifest(
         or expected_count <= 0
     ):
         raise OpenRouterManifestError("expected_count must be a positive integer")
+    if expected_count != _COHORT_MODEL_COUNT:
+        raise OpenRouterManifestError(
+            f"OpenRouter reference cohort must contain exactly {_COHORT_MODEL_COUNT} models"
+        )
     manifest_path = Path(path)
     try:
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
