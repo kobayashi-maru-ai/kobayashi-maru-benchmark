@@ -743,6 +743,11 @@ class OpenRouterSweepTests(unittest.TestCase):
                 repaired["generation_repair"]["original_generation"],
                 original_generation,
             )
+            self.assertEqual(repaired["generation_repair"]["max_attempts"], 2)
+            self.assertEqual(len(repaired["generation_repair"]["attempts"]), 2)
+            self.assertEqual(
+                len(repaired["generation_repair"]["attempt_configs"]), 2
+            )
             manifest = json.loads((run_dir / "run.json").read_text())
             self.assertEqual(manifest["status"], "generated")
             self.assertIsNone(manifest["scorer_version"])
