@@ -2,14 +2,16 @@ import copy
 import importlib
 import importlib.util
 import json
+import os
 import tempfile
 import unittest
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 from urllib.parse import quote
 
-from kobayashi_benchmark.adapters import BudgetExceeded, CostBudget
+from kobayashi_benchmark.adapters import BudgetExceeded, CostBudget, OpenRouterModelSpec
 from kobayashi_benchmark.models import GenerationConfig
 
 MODULE_NAME = "kobayashi_benchmark.openrouter"
@@ -77,7 +79,6 @@ class OpenRouterCohortTests(unittest.TestCase):
             endpoints[entry["model_id"]] = {
                 "data": {
                     "id": entry["model_id"],
-                    "canonical_slug": entry["canonical_slug"],
                     "endpoints": [
                         {
                             "tag": entry["endpoint_tag"],
@@ -167,6 +168,54 @@ class OpenRouterCohortTests(unittest.TestCase):
                     openrouter.load_cohort_manifest(self.write_manifest(manifest))
                 self.assert_bounded_error(caught.exception)
 
+    def test_manifest_requires_every_entry_and_price_snapshot_field(self):
+        openrouter = _openrouter()
+        entry_fields = (
+            "model_id",
+            "canonical_slug",
+            "endpoint_tag",
+            "provider_name",
+            "quantization",
+            "request_parameters",
+            "reasoning",
+            "price_snapshot",
+        )
+
+        for field in entry_fields:
+            with self.subTest(missing_entry_field=field):
+                manifest = self.make_manifest()
+                manifest["models"][0].pop(field)
+                with self.assertRaises(openrouter.OpenRouterManifestError) as caught:
+                    openrouter.load_cohort_manifest(self.write_manifest(manifest))
+                self.assert_bounded_error(caught.exception)
+
+        for field in ("prompt", "completion"):
+            with self.subTest(missing_snapshot_field=field):
+                manifest = self.make_manifest()
+                manifest["models"][0]["price_snapshot"].pop(field)
+                with self.assertRaises(openrouter.OpenRouterManifestError) as caught:
+                    openrouter.load_cohort_manifest(self.write_manifest(manifest))
+                self.assert_bounded_error(caught.exception)
+
+    def test_manifest_rejects_invalid_snapshot_types_and_prices(self):
+        openrouter = _openrouter()
+        invalid_values = (None, [], "0", "-0.1", "NaN", "Infinity")
+
+        manifest = self.make_manifest()
+        manifest["models"][0]["price_snapshot"] = []
+        with self.assertRaises(openrouter.OpenRouterManifestError) as caught:
+            openrouter.load_cohort_manifest(self.write_manifest(manifest))
+        self.assert_bounded_error(caught.exception)
+
+        for field in ("prompt", "completion"):
+            for invalid in invalid_values:
+                with self.subTest(field=field, invalid=invalid):
+                    manifest = self.make_manifest()
+                    manifest["models"][0]["price_snapshot"][field] = invalid
+                    with self.assertRaises(openrouter.OpenRouterManifestError) as caught:
+                        openrouter.load_cohort_manifest(self.write_manifest(manifest))
+                    self.assert_bounded_error(caught.exception)
+
     def test_manifest_rejects_duplicate_or_blank_pinned_identities(self):
         openrouter = _openrouter()
         fields = ("model_id", "canonical_slug", "endpoint_tag")
@@ -186,9 +235,15 @@ class OpenRouterCohortTests(unittest.TestCase):
         manifest = self.make_manifest()
         catalogue, endpoints = self.make_live_payloads(manifest)
 
-        result, get_calls = self.preflight(manifest, catalogue, endpoints)
+        with (
+            patch.dict(os.environ, {"OPENROUTER_API_KEY": "credential-sentinel"}),
+            patch("os.getenv") as getenv,
+            patch("kobayashi_benchmark.adapters._post_json") as post_json,
+        ):
+            result, get_calls = self.preflight(manifest, catalogue, endpoints)
 
         self.assertIsInstance(result.specs, tuple)
+        self.assertTrue(all(isinstance(spec, OpenRouterModelSpec) for spec in result.specs))
         self.assertEqual(result.model_count, 15)
         self.assertEqual(result.calls, 30)
         self.assertEqual(result.projected_usd, Decimal("0.285"))
@@ -200,6 +255,9 @@ class OpenRouterCohortTests(unittest.TestCase):
             "https://openrouter.ai/api/v1/models/lab/model-0/endpoints",
             get_calls,
         )
+        self.assertNotIn("credential-sentinel", repr(result))
+        getenv.assert_not_called()
+        post_json.assert_not_called()
 
     def test_rejects_catalogue_canonical_drift(self):
         openrouter = _openrouter()
@@ -272,21 +330,26 @@ class OpenRouterCohortTests(unittest.TestCase):
                         self.preflight(manifest, catalogue, endpoints)
                     self.assert_bounded_error(caught.exception)
 
-    def test_budget_refuses_a_projection_equal_to_five_dollars(self):
+    def test_budget_refuses_a_projection_equal_to_or_above_five_dollars(self):
         openrouter = _openrouter()
-        manifest = self.make_manifest()
-        catalogue, endpoints = self.make_live_payloads(manifest, prompt="0.1", completion="0.13")
-        endpoints["lab/model-14"]["data"]["endpoints"][0]["pricing"]["completion"] = "0.18"
-        get_json, _ = self.make_get_json(catalogue, endpoints)
+        for label, last_completion_price in (("equal", "0.18"), ("above", "0.1801")):
+            with self.subTest(label=label):
+                manifest = self.make_manifest()
+                catalogue, endpoints = self.make_live_payloads(
+                    manifest, prompt="0.1", completion="0.13"
+                )
+                endpoint = endpoints["lab/model-14"]["data"]["endpoints"][0]
+                endpoint["pricing"]["completion"] = last_completion_price
+                get_json, _ = self.make_get_json(catalogue, endpoints)
 
-        with self.assertRaises(BudgetExceeded):
-            openrouter.preflight_openrouter_cohort(
-                manifest_path=self.write_manifest(manifest),
-                samples=[SimpleNamespace(prompt="aa")],
-                config=GenerationConfig(max_tokens=1),
-                budget=CostBudget(Decimal("5")),
-                get_json=get_json,
-            )
+                with self.assertRaises(BudgetExceeded):
+                    openrouter.preflight_openrouter_cohort(
+                        manifest_path=self.write_manifest(manifest),
+                        samples=[SimpleNamespace(prompt="aa")],
+                        config=GenerationConfig(max_tokens=1),
+                        budget=CostBudget(Decimal("5")),
+                        get_json=get_json,
+                    )
 
 
 if __name__ == "__main__":
