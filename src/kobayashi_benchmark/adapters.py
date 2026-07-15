@@ -5,6 +5,7 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Protocol
 
 from .models import GenerationConfig, GenerationResult
@@ -17,6 +18,57 @@ class ModelAdapter(Protocol):
     def generate(
         self, prompt: str, config: GenerationConfig, system_prompt: str | None = None
     ) -> GenerationResult: ...
+
+
+class BudgetExceeded(RuntimeError):
+    """Raised when a projected or actual cost reaches the exclusive budget limit."""
+
+
+class CostBudget:
+    def __init__(self, limit: Decimal) -> None:
+        self._validate_amount(limit, name="limit")
+        if limit == 0:
+            raise ValueError("limit must be greater than zero")
+        self._limit = limit
+        self._spent = Decimal("0")
+
+    @property
+    def limit(self) -> Decimal:
+        return self._limit
+
+    @property
+    def spent(self) -> Decimal:
+        return self._spent
+
+    @staticmethod
+    def _validate_amount(amount: Decimal, *, name: str) -> None:
+        if not isinstance(amount, Decimal):
+            raise TypeError(f"{name} must be a Decimal")
+        if not amount.is_finite():
+            raise ValueError(f"{name} must be finite")
+        if amount < 0:
+            raise ValueError(f"{name} must not be negative")
+
+    def _require_below_limit(self, projected_spend: Decimal) -> None:
+        if projected_spend >= self.limit:
+            raise BudgetExceeded(
+                f"projected spend {projected_spend} must remain below limit {self.limit}"
+            )
+
+    def preflight(self, projected_total: Decimal) -> None:
+        self._validate_amount(projected_total, name="projected_total")
+        self._require_below_limit(projected_total)
+
+    def authorize(self, projected_request: Decimal) -> None:
+        self._validate_amount(projected_request, name="projected_request")
+        self._require_below_limit(self.spent + projected_request)
+
+    def charge(self, actual_cost: Decimal) -> Decimal:
+        self._validate_amount(actual_cost, name="actual_cost")
+        cumulative_cost = self.spent + actual_cost
+        self._require_below_limit(cumulative_cost)
+        self._spent = cumulative_cost
+        return self.spent
 
 
 def _post_json(url: str, payload: dict, headers: dict[str, str], timeout: int) -> dict:
