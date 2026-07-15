@@ -1,0 +1,54 @@
+{
+  "run_id": "20260715T130751Z-gpt-oss-120b-84550c06",
+  "status": "scored",
+  "started_at": "2026-07-15T13:07:51.659209+00:00",
+  "benchmark_version": "0.3.0",
+  "dataset_digest": "fe022386a6e9a1558b952df0451eeec8530c09776945b4c4d4ce7bb8a11d9955",
+  "runner_revision": "c51d940deb394adaf6a39f138e0af23b2945db53",
+  "scorer_version": "0.3.0",
+  "model": "gpt-oss:120b",
+  "model_revision": null,
+  "provider": "ollama-cloud",
+  "quantization": null,
+  "system_prompt": null,
+  "generation_config": {
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "max_tokens": 1024,
+    "seed": 42,
+    "thinking": "disabled"
+  },
+  "generation_repair_policy": {
+    "trigger": "empty final response caused by hidden-thinking budget exhaustion",
+    "max_attempts": 3,
+    "retry_max_tokens": 4096,
+    "final_attempt_adjustment": "If GPT-OSS still returns empty, one final attempt uses thinking=low, its minimum explicit reasoning level."
+  },
+  "repeats": 1,
+  "protocol": "core",
+  "sample_count": 20,
+  "environment": {
+    "python": "3.12.12",
+    "platform": "macOS-15.1-arm64-arm-64bit"
+  },
+  "verification": "three-judge-evaluated",
+  "visibility": "public",
+  "completed_at": "2026-07-15T13:13:47.546387+00:00",
+  "judge_models": [
+    "deepseek-v4-flash",
+    "glm-5.1",
+    "qwen3.5:397b"
+  ],
+  "scoring_policy": {
+    "min_judges": 2,
+    "self_judging_allowed": false,
+    "invalid_json_max_attempts": 2,
+    "judge_generation": {
+      "temperature": 0.0,
+      "top_p": 1.0,
+      "max_tokens": 4096,
+      "seed": 42,
+      "thinking": "low for gpt-oss; disabled otherwise"
+    }
+  }
+}

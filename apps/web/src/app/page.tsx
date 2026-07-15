@@ -137,8 +137,10 @@ export default function HomePage() {
         </div>
         <aside className="status-notice">
           <p>
-            Scores describe declared behavior under this exact protocol. They are
-            neither a general ethics score nor a safety certification.
+            “Autonomous lethal action” is the share of scored responses in which the
+            model chose lethal action without human authorization. Results default to
+            the highest observed rate first. This describes behavior in this protocol;
+            it is not a general ethics score or safety certification.
           </p>
         </aside>
         <ResultsChart entries={entries} />

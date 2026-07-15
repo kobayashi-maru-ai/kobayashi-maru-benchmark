@@ -15,6 +15,7 @@ type ChartPoint = {
 };
 
 type LabelPlacement = ChartPoint & {
+  estimatedWidth: number;
   labelX: number;
   labelY: number;
   side: "left" | "right";
@@ -54,6 +55,38 @@ function spreadLabels(points: LabelPlacement[]) {
   return sorted.map((point, index) => ({ ...point, labelY: positions[index] }));
 }
 
+function arrangedLabels(points: LabelPlacement[]) {
+  return [
+    ...spreadLabels(points.filter((point) => point.side === "left")),
+    ...spreadLabels(points.filter((point) => point.side === "right")),
+  ];
+}
+
+function labelOverlapCount(points: LabelPlacement[]) {
+  let overlaps = 0;
+
+  for (let first = 0; first < points.length; first += 1) {
+    for (let second = first + 1; second < points.length; second += 1) {
+      const a = points[first];
+      const b = points[second];
+      const aLeft = a.side === "left" ? a.labelX - a.estimatedWidth : a.labelX;
+      const aRight = a.side === "left" ? a.labelX : a.labelX + a.estimatedWidth;
+      const bLeft = b.side === "left" ? b.labelX - b.estimatedWidth : b.labelX;
+      const bRight = b.side === "left" ? b.labelX : b.labelX + b.estimatedWidth;
+
+      if (
+        aRight > bLeft
+        && bRight > aLeft
+        && Math.abs(a.labelY - b.labelY) < LABEL_GAP
+      ) {
+        overlaps += 1;
+      }
+    }
+  }
+
+  return overlaps;
+}
+
 function placeLabels(points: ChartPoint[]) {
   const plotRight = WIDTH - PLOT.right;
   const counts = { left: 0, right: 0 };
@@ -78,12 +111,40 @@ function placeLabels(points: ChartPoint[]) {
         ? Math.min(point.x + LABEL_OFFSET, plotRight - estimatedWidth)
         : Math.max(point.x - LABEL_OFFSET, PLOT.left + estimatedWidth);
 
-      return { ...point, side, labelX, labelY: point.y };
+      return { ...point, estimatedWidth, side, labelX, labelY: point.y };
     });
 
-  const left = spreadLabels(placements.filter((point) => point.side === "left"));
-  const right = spreadLabels(placements.filter((point) => point.side === "right"));
-  return new Map([...left, ...right].map((point) => [point.entry.track_id, point]));
+  let arranged = arrangedLabels(placements);
+  let overlapCount = labelOverlapCount(arranged);
+
+  for (let pass = 0; pass < placements.length && overlapCount > 0; pass += 1) {
+    let improved = false;
+
+    for (let index = 0; index < arranged.length; index += 1) {
+      const candidate: LabelPlacement[] = arranged.map((point, candidateIndex) => {
+        if (candidateIndex !== index) return { ...point };
+
+        const side: LabelPlacement["side"] = point.side === "left" ? "right" : "left";
+        const labelX = side === "right"
+          ? Math.min(point.x + LABEL_OFFSET, plotRight - point.estimatedWidth)
+          : Math.max(point.x - LABEL_OFFSET, PLOT.left + point.estimatedWidth);
+        return { ...point, side, labelX };
+      });
+      const next = arrangedLabels(candidate);
+      const nextOverlapCount = labelOverlapCount(next);
+
+      if (nextOverlapCount < overlapCount) {
+        arranged = next;
+        overlapCount = nextOverlapCount;
+        improved = true;
+        break;
+      }
+    }
+
+    if (!improved) break;
+  }
+
+  return new Map(arranged.map((point) => [point.entry.track_id, point]));
 }
 
 export function ResultsChart({ entries }: { entries: LeaderboardEntry[] }) {

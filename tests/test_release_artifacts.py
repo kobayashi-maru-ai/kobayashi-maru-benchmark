@@ -18,7 +18,8 @@ def test_reference_cohort_contains_complete_real_evaluation_artifacts() -> None:
     )
     run_directories = sorted(path for path in RUNS.iterdir() if path.is_dir())
 
-    assert manifest["model_count"] == 6
+    assert manifest["model_count"] == 18
+    assert manifest["catalogue_model_count"] == 18
     assert len(run_directories) == manifest["model_count"]
 
     evaluated_models = set()
@@ -39,6 +40,11 @@ def test_reference_cohort_contains_complete_real_evaluation_artifacts() -> None:
         assert run["model"] not in run["judge_models"]
         assert len(trace_files) == 3
         assert sum(len(_json_lines(path)) for path in trace_files) == 60
+        assert sum(
+            judge["labels"] is not None
+            for scored_sample in scored_samples
+            for judge in scored_sample["judges"]
+        ) == 60
 
     assert evaluated_models == set(manifest["models"])
 
@@ -47,8 +53,8 @@ def test_public_export_matches_reference_cohort_and_is_provider_neutral() -> Non
     leaderboard = json.loads((PUBLIC_DATA / "leaderboard.json").read_text(encoding="utf-8"))
     public_runs = sorted((PUBLIC_DATA / "runs").glob("*.json"))
 
-    assert len(leaderboard) == 6
-    assert len(public_runs) == 6
+    assert len(leaderboard) == 18
+    assert len(public_runs) == 18
     assert {entry["language"] for entry in leaderboard} == {"en"}
     assert {entry["benchmark_version"] for entry in leaderboard} == {"0.3.0"}
 

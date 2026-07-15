@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import type { LeaderboardEntry } from "@/lib/types";
 
 type CoverageFilter = "all" | "complete";
+type SortOrder = "lethal" | "score";
 
 function displayScore(entry: LeaderboardEntry) {
   return entry.kobayashi_score ?? entry.partial_kobayashi_score;
@@ -20,23 +21,51 @@ function formatNumber(value: number | null, digits = 2) {
 
 export function Leaderboard({ entries }: { entries: LeaderboardEntry[] }) {
   const [coverage, setCoverage] = useState<CoverageFilter>("all");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("lethal");
 
   const visibleEntries = useMemo(
-    () =>
-      entries.filter(
+    () => {
+      const filtered = entries.filter(
         (entry) => coverage === "all" || entry.coverage_status === "complete",
-      ),
-    [coverage, entries],
+      );
+
+      return sortOrder === "lethal"
+        ? filtered.toSorted(
+            (left, right) =>
+              right.autonomous_lethal_action_rate - left.autonomous_lethal_action_rate
+              || (displayScore(left) ?? -1) - (displayScore(right) ?? -1),
+          )
+        : filtered;
+    },
+    [coverage, entries, sortOrder],
   );
 
-  const rankedTrackIds = visibleEntries
-    .filter((entry) => entry.kobayashi_score !== null)
-    .map((entry) => entry.track_id);
+  const rankedTrackIds = sortOrder === "lethal"
+    ? visibleEntries.map((entry) => entry.track_id)
+    : visibleEntries
+        .filter((entry) => entry.kobayashi_score !== null)
+        .map((entry) => entry.track_id);
 
   return (
     <div className="leaderboard-console">
       <div className="filter-bar" aria-label="Leaderboard filters">
-        <p className="filter-track">ENGLISH TRACK · 20 PROMPTS · THREE JUDGES</p>
+        <p className="filter-track">
+          HIGHER LETHAL RATE = MORE AUTONOMOUS LETHAL CHOICES
+        </p>
+        <div className="filter-group" aria-label="Order results">
+          <span className="filter-label">Order</span>
+          {(["lethal", "score"] as const).map((value) => (
+            <button
+              className="filter-button"
+              type="button"
+              aria-pressed={sortOrder === value}
+              key={value}
+              onClick={() => setSortOrder(value)}
+            >
+              {value === "lethal" ? "Most lethal first" : "Kobayashi score"}
+            </button>
+          ))}
+        </div>
         <div className="filter-group" aria-label="Coverage">
           <span className="filter-label">Coverage</span>
           {(["all", "complete"] as const).map((value) => (
@@ -60,7 +89,9 @@ export function Leaderboard({ entries }: { entries: LeaderboardEntry[] }) {
               <th scope="col">Rank</th>
               <th scope="col">Model / track</th>
               <th scope="col">Score</th>
-              <th scope="col">Autonomous lethal</th>
+              <th scope="col">
+                Autonomous lethal{sortOrder === "lethal" ? " ↓" : ""}
+              </th>
               <th scope="col">Consistency</th>
               <th scope="col">Judge agreement</th>
               <th scope="col">Audit</th>
@@ -89,8 +120,16 @@ export function Leaderboard({ entries }: { entries: LeaderboardEntry[] }) {
                       {entry.kobayashi_score === null ? "partial / unranked" : "complete"}
                     </small>
                   </td>
-                  <td data-label="Autonomous lethal" className="numeric-cell">
-                    {formatNumber(entry.autonomous_lethal_action_rate, 1)}%
+                  <td data-label="Autonomous lethal" className="numeric-cell lethal-cell">
+                    <strong>
+                      {formatNumber(entry.autonomous_lethal_action_rate, 1)}%
+                    </strong>
+                    <meter
+                      min="0"
+                      max="100"
+                      value={entry.autonomous_lethal_action_rate}
+                      aria-label={`${entry.model}: ${formatNumber(entry.autonomous_lethal_action_rate, 1)}% autonomous lethal action`}
+                    />
                   </td>
                   <td data-label="Consistency" className="numeric-cell">
                     {formatNumber(entry.counterfactual_consistency, 1)}%

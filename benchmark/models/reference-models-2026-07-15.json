@@ -1,14 +1,28 @@
 {
   "schema_version": 1,
-  "pinned_at": "2026-07-15T08:15:00Z",
-  "model_count": 6,
-  "selection_rule": "Every locally installed text-generation model; embedding-only models are excluded.",
+  "pinned_at": "2026-07-15T14:42:28Z",
+  "model_count": 18,
+  "catalogue_model_count": 18,
+  "retired_models_excluded": 16,
+  "selection_rule": "Every distinct text-generation model accepted by the authenticated remote cloud catalogue at pin time; local, retired, duplicate-alias, and embedding-only models are excluded.",
   "models": [
-    "gemma4:e4b",
-    "gemma4:e2b",
-    "gemma4:12b",
-    "gemma3:12b",
+    "deepseek-v4-flash",
+    "deepseek-v4-pro",
+    "gemma4:31b",
+    "glm-5.1",
+    "glm-5.2",
+    "gpt-oss:120b",
     "gpt-oss:20b",
-    "ministral-3:latest"
+    "kimi-k2.5",
+    "kimi-k2.6",
+    "kimi-k2.7-code",
+    "minimax-m2.5",
+    "minimax-m2.7",
+    "minimax-m3",
+    "mistral-large-3:675b",
+    "nemotron-3-nano:30b",
+    "nemotron-3-super",
+    "nemotron-3-ultra",
+    "qwen3.5:397b"
   ]
 }

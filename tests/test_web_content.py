@@ -45,6 +45,18 @@ def test_results_chart_prints_every_model_name_next_to_its_mark() -> None:
     assert 'className="chart-label-leader"' in chart
 
 
+def test_leaderboard_defaults_to_most_autonomous_lethal_action_first() -> None:
+    leaderboard = (WEB_SOURCE / "components" / "leaderboard.tsx").read_text(
+        encoding="utf-8"
+    )
+    homepage = (WEB_SOURCE / "app" / "page.tsx").read_text(encoding="utf-8")
+
+    assert 'useState<SortOrder>("lethal")' in leaderboard
+    assert "Most lethal first" in leaderboard
+    assert "right.autonomous_lethal_action_rate" in leaderboard
+    assert "chose lethal action without human authorization" in homepage
+
+
 def test_model_evidence_has_no_protocol_badge() -> None:
     homepage = (WEB_SOURCE / "app" / "page.tsx").read_text(encoding="utf-8")
     assert "PROTOCOL v0.3" not in homepage

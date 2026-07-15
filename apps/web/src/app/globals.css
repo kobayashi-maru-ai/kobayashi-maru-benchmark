@@ -576,6 +576,18 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .score-cell small,
 .review-note { display: block; margin-top: 0.2rem; color: var(--faint); font-family: "IBM Plex Mono", monospace; font-size: 0.58rem; text-transform: uppercase; }
 .numeric-cell { color: var(--muted); font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; }
+.lethal-cell { min-width: 9rem; }
+.lethal-cell strong { display: block; color: var(--red); font-size: 1rem; }
+.lethal-cell meter {
+  width: 7.5rem;
+  height: 0.4rem;
+  margin-top: 0.45rem;
+  border: 0;
+  background: var(--line);
+}
+.lethal-cell meter::-webkit-meter-bar { background: var(--line); border: 0; border-radius: 0; }
+.lethal-cell meter::-webkit-meter-optimum-value { background: var(--red); }
+.lethal-cell meter::-moz-meter-bar { background: var(--red); }
 .audit-link { color: var(--paper); font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; text-underline-offset: 0.2rem; }
 .review-note { color: var(--red); }
 .empty-state { padding: 2rem 0; color: var(--muted); }
