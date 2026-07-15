@@ -251,13 +251,18 @@ class OpenRouterAdapter:
             if isinstance(available, list)
             else []
         )
+        endpoint_total = endpoints.get("total") if isinstance(endpoints, dict) else None
         route_is_exact = (
             isinstance(route_metadata, dict)
             and route_metadata.get("requested") == self.spec.canonical_slug
             and route_metadata.get("strategy") == "direct"
             and route_metadata.get("attempt") == 1
             and isinstance(endpoints, dict)
-            and endpoints.get("total") == 1
+            and isinstance(endpoint_total, int)
+            and not isinstance(endpoint_total, bool)
+            and endpoint_total >= 1
+            and isinstance(available, list)
+            and len(available) == 1
             and len(selected) == 1
             and selected[0].get("model") == self.spec.canonical_slug
             and selected[0].get("provider") == self.spec.provider_name
@@ -281,7 +286,7 @@ class OpenRouterAdapter:
             "openrouter_metadata": route_metadata,
             "request_parameters": request_parameters,
         }
-        if returned_model != self.spec.canonical_slug:
+        if returned_model not in {self.spec.model_id, self.spec.canonical_slug}:
             return self._result_error(
                 started, "OpenRouter identity mismatch", provider_metadata=metadata
             )
