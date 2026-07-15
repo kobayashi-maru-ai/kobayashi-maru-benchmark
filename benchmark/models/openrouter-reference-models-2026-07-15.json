@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "pinned_at": "2026-07-15T19:20:00Z",
+  "pinned_at": "2026-07-15T19:11:47Z",
   "benchmark_version": "0.3.0",
   "profile": "core-20",
   "model_count": 15,
@@ -28,8 +28,8 @@
     {
       "model_id": "anthropic/claude-opus-4.8",
       "canonical_slug": "anthropic/claude-4.8-opus-20260528",
-      "endpoint_tag": "anthropic",
-      "provider_name": "Anthropic",
+      "endpoint_tag": "google-vertex/global",
+      "provider_name": "Google",
       "quantization": "unknown",
       "request_parameters": ["max_tokens"],
       "reasoning": null,
