@@ -289,6 +289,14 @@ class OpenRouterSweepTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(SystemExit):
                 self._parse("--prior-spend-usd", value)
 
+        with self.assertRaises(SystemExit):
+            self._parse(
+                "--start-at-model",
+                "lab/model-2",
+                "--only-model",
+                "lab/model-3",
+            )
+
     def test_preflight_only_never_reads_key_or_constructs_paid_boundaries(self):
         preflight = self._preflight()
         output = StringIO()
@@ -561,6 +569,58 @@ class OpenRouterSweepTests(unittest.TestCase):
         self.assertEqual(summary["start_at_model"], "lab/model-2")
         self.assertEqual(summary["prior_spend_usd"], "0.5916230")
         self.assertNotIn(secret, output.getvalue())
+
+    def test_paid_sweep_can_run_one_model_with_selected_projection(self):
+        preflight = self._preflight()
+        created = []
+        output = StringIO()
+
+        def make_adapter(*, spec, api_key, budget):
+            return SimpleNamespace(
+                spec=spec,
+                model=spec.model_id,
+                provider="openrouter",
+                budget=budget,
+            )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+
+            def create(adapter, samples, config, output_root, **kwargs):
+                created.append(adapter.model)
+                run_dir = root / "only-run"
+                run_dir.mkdir()
+                (run_dir / "run.json").write_text('{"status":"generated"}')
+                return run_dir
+
+            with (
+                patch.object(cli, "preflight_openrouter_cohort", return_value=preflight),
+                patch.object(cli.os, "getenv", return_value="secret-from-env"),
+                patch.object(cli, "OpenRouterAdapter", new=make_adapter),
+                patch.object(cli, "create_run", new=create),
+                redirect_stdout(output),
+            ):
+                args = self._parse(
+                    "--output",
+                    temp_dir,
+                    "--only-model",
+                    "lab/model-8",
+                    "--prior-spend-usd",
+                    "2.52524735",
+                )
+                result = args.func(args)
+
+        self.assertEqual(result, 0)
+        self.assertEqual(created, ["lab/model-8"])
+        projection, summary = map(json.loads, output.getvalue().splitlines())
+        self.assertEqual(projection["selected_models"], 1)
+        self.assertEqual(projection["selected_calls"], 20)
+        self.assertLess(
+            Decimal(projection["prior_spend_usd"])
+            + Decimal(projection["selected_projected_usd"]),
+            Decimal("5"),
+        )
+        self.assertEqual(summary["only_model"], "lab/model-8")
 
 
 if __name__ == "__main__":
