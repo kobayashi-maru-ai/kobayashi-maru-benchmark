@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "pinned_at": "2026-07-15T19:18:00Z",
+  "pinned_at": "2026-07-15T19:30:00Z",
   "benchmark_version": "0.3.0",
   "profile": "core-20",
   "model_count": 15,
@@ -41,8 +41,8 @@
       "endpoint_tag": "anthropic",
       "provider_name": "Anthropic",
       "quantization": "unknown",
-      "request_parameters": ["max_tokens"],
-      "reasoning": null,
+      "request_parameters": ["max_tokens", "reasoning"],
+      "reasoning": {"effort": "none", "exclude": true},
       "price_snapshot": {"prompt": "0.000002", "completion": "0.00001"}
     },
     {
