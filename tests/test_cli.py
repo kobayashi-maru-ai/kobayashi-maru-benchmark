@@ -174,7 +174,7 @@ class OpenRouterSweepTests(unittest.TestCase):
         reasoning = [
             None,
             {"enabled": False},
-            {"effort": None},
+            {"effort": "none"},
             {"effort": "low"},
             {"max_tokens": 64},
         ]
@@ -215,6 +215,42 @@ class OpenRouterSweepTests(unittest.TestCase):
         self.assertEqual(args.budget_usd, Decimal("5"))
         self.assertEqual(args.output, "results/runs")
         self.assertFalse(args.preflight_only)
+
+    def test_sweep_parser_rejects_direct_api_key_without_rendering_it(self):
+        secret = "sentinel-direct-key-never-render"
+        error = StringIO()
+        with redirect_stderr(error), self.assertRaises(SystemExit):
+            build_parser().parse_args(
+                [
+                    "sweep-openrouter",
+                    "--manifest",
+                    "cohort.json",
+                    "--api-key-env",
+                    "OPENROUTER_API_KEY",
+                    "--api-key",
+                    secret,
+                ]
+            )
+
+        self.assertIn("--api-key-env", error.getvalue())
+        self.assertNotIn(secret, error.getvalue())
+
+    def test_sweep_parser_rejects_non_environment_name_without_rendering_it(self):
+        secret = "sentinel-key-value-not-an-env-name"
+        error = StringIO()
+        with redirect_stderr(error), self.assertRaises(SystemExit):
+            build_parser().parse_args(
+                [
+                    "sweep-openrouter",
+                    "--manifest",
+                    "cohort.json",
+                    "--api-key-env",
+                    secret,
+                ]
+            )
+
+        self.assertIn("environment variable name", error.getvalue())
+        self.assertNotIn(secret, error.getvalue())
 
     def test_sweep_parser_rejects_non_positive_or_over_limit_budget(self):
         parser = build_parser()
@@ -273,6 +309,7 @@ class OpenRouterSweepTests(unittest.TestCase):
     def test_missing_paid_key_exits_only_after_public_preflight(self):
         events = []
         output = StringIO()
+        supplied_name = "SENTINEL_VALID_ENVIRONMENT_NAME"
 
         def preflight(*args, **kwargs):
             events.append("preflight")
@@ -282,6 +319,7 @@ class OpenRouterSweepTests(unittest.TestCase):
             events.append(("getenv", name))
             return None
 
+        exit_context = self.assertRaisesRegex(SystemExit, "environment variable")
         with (
             patch.object(cli, "preflight_openrouter_cohort", side_effect=preflight),
             patch.object(cli.os, "getenv", side_effect=getenv),
@@ -290,24 +328,34 @@ class OpenRouterSweepTests(unittest.TestCase):
             ),
             patch.object(cli, "create_run", side_effect=AssertionError("run created")),
             redirect_stdout(output),
-            self.assertRaisesRegex(SystemExit, "environment variable"),
+            exit_context,
         ):
-            self._parse().func(self._parse())
+            args = self._parse("--api-key-env", supplied_name)
+            args.func(args)
 
-        self.assertEqual(events, ["preflight", ("getenv", "OPENROUTER_API_KEY")])
+        self.assertEqual(events, ["preflight", ("getenv", supplied_name)])
+        self.assertNotIn(supplied_name, str(exit_context.exception))
         self.assertEqual(json.loads(output.getvalue())["projected_usd"], "3.03")
 
     def test_paid_sweep_uses_one_budget_fixed_core_config_and_secret_free_summary(self):
+        class FlushTrackingOutput(StringIO):
+            flushed = False
+
+            def flush(self):
+                self.flushed = True
+                return super().flush()
+
         secret = "sentinel-openrouter-key-never-render"
         preflight = self._preflight()
         events = []
         adapters = []
         configs = []
         run_kwargs = []
-        output = StringIO()
+        output = FlushTrackingOutput()
 
         def make_adapter(*, spec, api_key, budget):
             self.assertEqual(api_key, secret)
+            self.assertTrue(output.flushed)
             events.append(("adapter", spec.model_id))
             adapter = SimpleNamespace(
                 spec=spec,
@@ -339,7 +387,12 @@ class OpenRouterSweepTests(unittest.TestCase):
 
             def resolve(*args, **kwargs):
                 events.append("preflight")
-                self.assertEqual(kwargs["config"].max_tokens, 1024)
+                self.assertEqual(len(list(kwargs["samples"])), 20)
+                config = kwargs["config"]
+                self.assertEqual(
+                    (config.temperature, config.top_p, config.max_tokens, config.seed),
+                    (0.0, 1.0, 1024, 42),
+                )
                 return preflight
 
             with (
@@ -370,6 +423,14 @@ class OpenRouterSweepTests(unittest.TestCase):
         self.assertEqual(
             [kwargs["model_revision"] for kwargs in run_kwargs],
             [spec.canonical_slug for spec in preflight.specs],
+        )
+        self.assertEqual(
+            [kwargs["quantization"] for kwargs in run_kwargs],
+            [spec.quantization for spec in preflight.specs],
+        )
+        self.assertTrue(all(kwargs["protocol"] == "core" for kwargs in run_kwargs))
+        self.assertTrue(
+            all(kwargs.get("visibility", "public") == "public" for kwargs in run_kwargs)
         )
         lines = output.getvalue().splitlines()
         self.assertEqual(len(lines), 2)
