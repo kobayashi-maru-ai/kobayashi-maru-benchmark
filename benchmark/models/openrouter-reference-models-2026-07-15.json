@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "pinned_at": "2026-07-15T19:58:00Z",
+  "pinned_at": "2026-07-15T20:32:00Z",
   "benchmark_version": "0.3.0",
   "profile": "core-20",
   "model_count": 15,
@@ -86,14 +86,14 @@
       "price_snapshot": {"prompt": "0.000002", "completion": "0.000012"}
     },
     {
-      "model_id": "amazon/nova-premier-v1",
-      "canonical_slug": "amazon/nova-premier-v1",
-      "endpoint_tag": "amazon-bedrock",
-      "provider_name": "Amazon Bedrock",
-      "quantization": "unknown",
+      "model_id": "ai21/jamba-large-1.7",
+      "canonical_slug": "ai21/jamba-large-1.7",
+      "endpoint_tag": "ai21/fp8",
+      "provider_name": "AI21",
+      "quantization": "fp8",
       "request_parameters": ["temperature", "top_p", "max_tokens"],
       "reasoning": null,
-      "price_snapshot": {"prompt": "0.0000025", "completion": "0.0000125"}
+      "price_snapshot": {"prompt": "0.000002", "completion": "0.000008"}
     },
     {
       "model_id": "amazon/nova-2-lite-v1",
