@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import kobayashi_benchmark.cli as cli
-from kobayashi_benchmark.adapters import OpenRouterModelSpec
+from kobayashi_benchmark.adapters import CostBudget, OpenRouterModelSpec
 from kobayashi_benchmark.cli import (
     _adapter,
     _is_official_ollama_cloud,
@@ -212,6 +212,7 @@ class OpenRouterSweepTests(unittest.TestCase):
                 parser.parse_args(argv)
 
         args = self._parse()
+        self.assertIsInstance(args.budget_usd, Decimal)
         self.assertEqual(args.budget_usd, Decimal("5"))
         self.assertEqual(args.output, "results/runs")
         self.assertFalse(args.preflight_only)
@@ -355,6 +356,7 @@ class OpenRouterSweepTests(unittest.TestCase):
 
         def make_adapter(*, spec, api_key, budget):
             self.assertEqual(api_key, secret)
+            self.assertIsInstance(budget, CostBudget)
             self.assertTrue(output.flushed)
             events.append(("adapter", spec.model_id))
             adapter = SimpleNamespace(
