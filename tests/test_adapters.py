@@ -257,6 +257,27 @@ class OpenRouterAdapterTests(unittest.TestCase):
         self.assertEqual(budget.spent, Decimal("0"))
 
     @patch("kobayashi_benchmark.adapters._post_json")
+    def test_output_cap_uses_max_completion_tokens_when_exact_route_requires_it(
+        self, post_json
+    ):
+        post_json.return_value = self.successful_response()
+        spec = self.make_spec(
+            supported_parameters=frozenset({"max_completion_tokens"}),
+            reasoning=None,
+        )
+        adapter = self.make_adapter(spec=spec)
+
+        result = adapter.generate("prompt", GenerationConfig(max_tokens=321))
+
+        self.assertIsNone(result.error)
+        payload = post_json.call_args.args[1]
+        self.assertEqual(payload["max_completion_tokens"], 321)
+        self.assertNotIn("max_tokens", payload)
+        self.assertEqual(
+            result.provider_metadata["request_parameters"], ["max_completion_tokens"]
+        )
+
+    @patch("kobayashi_benchmark.adapters._post_json")
     def test_usage_route_and_finish_metadata_are_normalized_and_json_serializable(
         self, post_json
     ):
