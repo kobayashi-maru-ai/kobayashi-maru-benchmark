@@ -103,6 +103,21 @@ def _print_json_line(payload: dict) -> None:
     )
 
 
+def _project_openrouter_specs(
+    specs: tuple[OpenRouterModelSpec, ...], samples: list, config: GenerationConfig
+) -> Decimal:
+    prompt_bytes = sum(len(sample.prompt.encode("utf-8")) for sample in samples)
+    sample_count = len(samples)
+    return sum(
+        (
+            Decimal(prompt_bytes) * spec.prompt_price
+            + Decimal(sample_count * config.max_tokens) * spec.completion_price
+            for spec in specs
+        ),
+        start=Decimal("0"),
+    )
+
+
 def command_sweep_openrouter(args) -> int:
     samples = pilot_samples(build_samples())
     budget = CostBudget(args.budget_usd)
@@ -119,27 +134,38 @@ def command_sweep_openrouter(args) -> int:
         config=preflight_config,
         budget=budget,
     )
-    budget.preflight(args.prior_spend_usd + preflight.projected_usd)
-    budget.charge(args.prior_spend_usd)
     specs = preflight.specs
-    if args.start_at_model is not None:
+    selected_model = args.only_model or args.start_at_model
+    if selected_model is not None:
         start_index = next(
             (
                 index
                 for index, spec in enumerate(specs)
-                if spec.model_id == args.start_at_model
+                if spec.model_id == selected_model
             ),
             None,
         )
         if start_index is None:
-            raise SystemExit("Resume model is not present in the pinned cohort")
-        specs = specs[start_index:]
+            raise SystemExit("Selected model is not present in the pinned cohort")
+        specs = specs[start_index : start_index + 1] if args.only_model else specs[start_index:]
+    selected_projection = _project_openrouter_specs(specs, samples, preflight_config)
+    budget.preflight(args.prior_spend_usd + selected_projection)
+    budget.charge(args.prior_spend_usd)
     projection = {
         "models": preflight.model_count,
         "calls": preflight.calls,
         "projected_usd": str(preflight.projected_usd),
         "budget_usd": str(budget.limit),
     }
+    if args.start_at_model is not None or args.only_model is not None or args.prior_spend_usd:
+        projection.update(
+            {
+                "selected_models": len(specs),
+                "selected_calls": len(specs) * len(samples),
+                "selected_projected_usd": str(selected_projection),
+                "prior_spend_usd": str(args.prior_spend_usd),
+            }
+        )
     _print_json_line(projection)
     if args.preflight_only:
         return 0
@@ -185,10 +211,11 @@ def command_sweep_openrouter(args) -> int:
         "runs": runs,
         "errors": errors,
     }
-    if args.start_at_model is not None or args.prior_spend_usd:
+    if args.start_at_model is not None or args.only_model is not None or args.prior_spend_usd:
         summary.update(
             {
                 "start_at_model": args.start_at_model,
+                "only_model": args.only_model,
                 "prior_spend_usd": str(args.prior_spend_usd),
             }
         )
@@ -765,9 +792,14 @@ def build_parser() -> argparse.ArgumentParser:
         help=argparse.SUPPRESS,
     )
     sweep.add_argument("--budget-usd", type=_sweep_budget, default=Decimal("5"))
-    sweep.add_argument(
+    resume_selection = sweep.add_mutually_exclusive_group()
+    resume_selection.add_argument(
         "--start-at-model",
         help="Resume at this exact model ID after validating the full pinned cohort.",
+    )
+    resume_selection.add_argument(
+        "--only-model",
+        help="Generate only this exact model ID after validating the pinned cohort.",
     )
     sweep.add_argument(
         "--prior-spend-usd",
