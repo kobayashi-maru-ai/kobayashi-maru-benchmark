@@ -53,6 +53,16 @@ class CostBudgetTests(unittest.TestCase):
 
         self.assertEqual(budget.spent, Decimal("0"))
 
+    def test_preflight_does_not_add_spend_to_the_complete_projected_total(self):
+        budget = self.make_budget()
+        budget.charge(Decimal("2"))
+
+        budget.preflight(Decimal("4"))
+        with self.assertRaises(self.budget_exceeded()):
+            budget.preflight(Decimal("5"))
+
+        self.assertEqual(budget.spent, Decimal("2"))
+
     def test_authorize_accounts_for_spend_and_refuses_the_exact_limit(self):
         budget = self.make_budget()
         budget.charge(Decimal("1.25"))
