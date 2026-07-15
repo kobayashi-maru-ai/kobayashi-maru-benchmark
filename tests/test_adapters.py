@@ -146,7 +146,7 @@ class OpenRouterAdapterTests(unittest.TestCase):
             budget=budget or adapters.CostBudget(Decimal("5")),
         )
 
-    def successful_response(self, *, returned_model="lab/model-a-20260715", cost="0.03"):
+    def successful_response(self, *, returned_model="lab/model-a-20260715", cost=0.03):
         return {
             "id": "generation-1",
             "model": returned_model,
@@ -258,9 +258,7 @@ class OpenRouterAdapterTests(unittest.TestCase):
     def test_usage_route_and_finish_metadata_are_normalized_and_json_serializable(
         self, post_json
     ):
-        post_json.return_value = self.successful_response(
-            returned_model="lab/model-a", cost="0.001230"
-        )
+        post_json.return_value = self.successful_response(cost="0.001230")
         budget = adapters.CostBudget(Decimal("5"))
         spec = self.make_spec(reasoning={"enabled": False})
         adapter = self.make_adapter(spec=spec, budget=budget)
@@ -276,7 +274,7 @@ class OpenRouterAdapterTests(unittest.TestCase):
             result.provider_metadata,
             {
                 "generation_id": "generation-1",
-                "returned_model": "lab/model-a",
+                "returned_model": "lab/model-a-20260715",
                 "canonical_model": spec.canonical_slug,
                 "endpoint_tag": "provider-a",
                 "quantization": "bf16",
@@ -306,17 +304,56 @@ class OpenRouterAdapterTests(unittest.TestCase):
 
     @patch("kobayashi_benchmark.adapters._post_json")
     def test_billed_cost_is_charged_before_returned_identity_is_rejected(self, post_json):
-        post_json.return_value = self.successful_response(
-            returned_model="different/model", cost="0.12"
-        )
-        budget = adapters.CostBudget(Decimal("5"))
-        adapter = self.make_adapter(budget=budget)
+        for returned_model in ("lab/model-a", "different/model"):
+            with self.subTest(returned_model=returned_model):
+                post_json.return_value = self.successful_response(
+                    returned_model=returned_model, cost="0.12"
+                )
+                budget = adapters.CostBudget(Decimal("5"))
+                adapter = self.make_adapter(budget=budget)
 
-        result = adapter.generate("prompt", GenerationConfig())
+                result = adapter.generate("prompt", GenerationConfig())
 
-        self.assertIn("identity mismatch", result.error.lower())
-        self.assertEqual(result.text, "")
-        self.assertEqual(budget.spent, Decimal("0.12"))
+                self.assertIn("identity mismatch", result.error.lower())
+                self.assertEqual(result.text, "")
+                self.assertEqual(budget.spent, Decimal("0.12"))
+
+    @patch("kobayashi_benchmark.adapters._post_json")
+    def test_route_metadata_must_confirm_one_direct_canonical_route(self, post_json):
+        cases = []
+        missing = self.successful_response(cost="0.01")
+        del missing["openrouter_metadata"]
+        cases.append(("missing", missing))
+
+        fallback = self.successful_response(cost="0.01")
+        fallback["openrouter_metadata"]["strategy"] = "fallback"
+        cases.append(("fallback", fallback))
+
+        retried = self.successful_response(cost="0.01")
+        retried["openrouter_metadata"]["attempt"] = 2
+        cases.append(("retried", retried))
+
+        multiple = self.successful_response(cost="0.01")
+        multiple["openrouter_metadata"]["endpoints"]["total"] = 2
+        cases.append(("multiple", multiple))
+
+        wrong_selected_model = self.successful_response(cost="0.01")
+        wrong_selected_model["openrouter_metadata"]["endpoints"]["available"][0][
+            "model"
+        ] = "lab/model-a"
+        cases.append(("wrong selected model", wrong_selected_model))
+
+        for name, response in cases:
+            with self.subTest(case=name):
+                post_json.return_value = response
+                budget = adapters.CostBudget(Decimal("5"))
+                adapter = self.make_adapter(budget=budget)
+
+                result = adapter.generate("prompt", GenerationConfig())
+
+                self.assertIn("route metadata", result.error.lower())
+                self.assertEqual(result.text, "")
+                self.assertEqual(budget.spent, Decimal("0.01"))
 
     @patch("kobayashi_benchmark.adapters._post_json")
     def test_billed_cost_is_charged_before_empty_content_is_rejected(self, post_json):
@@ -338,7 +375,7 @@ class OpenRouterAdapterTests(unittest.TestCase):
         missing = self.successful_response()
         del missing["usage"]["cost"]
         responses.append(missing)
-        for invalid_cost in ("not-a-cost", "NaN", "Infinity", "-0.01"):
+        for invalid_cost in (None, "", "not-a-cost", "NaN", "Infinity", "-0.01"):
             responses.append(self.successful_response(cost=invalid_cost))
 
         for response in responses:
