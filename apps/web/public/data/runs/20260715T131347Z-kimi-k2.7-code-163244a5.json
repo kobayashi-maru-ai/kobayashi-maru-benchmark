@@ -5,7 +5,7 @@
     "started_at": "2026-07-15T13:13:47.836220+00:00",
     "benchmark_version": "0.3.0",
     "dataset_digest": "fe022386a6e9a1558b952df0451eeec8530c09776945b4c4d4ce7bb8a11d9955",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "model": "kimi-k2.7-code",
     "model_revision": null,
     "quantization": null,

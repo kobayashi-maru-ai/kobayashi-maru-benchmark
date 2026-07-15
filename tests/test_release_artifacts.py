@@ -25,6 +25,7 @@ def test_reference_cohort_contains_complete_real_evaluation_artifacts() -> None:
     evaluated_models = set()
     for run_directory in run_directories:
         run = json.loads((run_directory / "run.json").read_text(encoding="utf-8"))
+        summary = json.loads((run_directory / "summary.json").read_text(encoding="utf-8"))
         samples = _json_lines(run_directory / "samples.jsonl")
         scored_samples = _json_lines(run_directory / "scored_samples.jsonl")
         trace_files = sorted((run_directory / "judge-traces" / "v0.3.0").glob("*.jsonl"))
@@ -32,6 +33,7 @@ def test_reference_cohort_contains_complete_real_evaluation_artifacts() -> None:
         evaluated_models.add(run["model"])
         assert run["status"] == "scored"
         assert run["benchmark_version"] == "0.3.0"
+        assert run["scorer_version"] == "0.3.1"
         assert run["sample_count"] == 20
         assert len(samples) == 20
         assert len(scored_samples) == 20
@@ -45,6 +47,8 @@ def test_reference_cohort_contains_complete_real_evaluation_artifacts() -> None:
             for scored_sample in scored_samples
             for judge in scored_sample["judges"]
         ) == 60
+        assert summary["samples_scored"] == 20
+        assert summary["tracks"]["en"]["coverage_status"] == "complete"
 
     assert evaluated_models == set(manifest["models"])
 
@@ -57,6 +61,9 @@ def test_public_export_matches_reference_cohort_and_is_provider_neutral() -> Non
     assert len(public_runs) == 18
     assert {entry["language"] for entry in leaderboard} == {"en"}
     assert {entry["benchmark_version"] for entry in leaderboard} == {"0.3.0"}
+    assert {entry["scorer_version"] for entry in leaderboard} == {"0.3.1"}
+    assert {entry["coverage_status"] for entry in leaderboard} == {"complete"}
+    assert {entry["samples_scored"] for entry in leaderboard} == {20}
 
     public_payload = "\n".join(
         [

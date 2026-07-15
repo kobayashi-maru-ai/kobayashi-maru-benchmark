@@ -55,6 +55,7 @@ def test_leaderboard_defaults_to_most_autonomous_lethal_action_first() -> None:
     assert "Most lethal first" in leaderboard
     assert "right.autonomous_lethal_action_rate" in leaderboard
     assert "chose lethal action without human authorization" in homepage
+    assert "Explicit refusals are scored as declared" in homepage
 
 
 def test_model_evidence_has_no_protocol_badge() -> None:

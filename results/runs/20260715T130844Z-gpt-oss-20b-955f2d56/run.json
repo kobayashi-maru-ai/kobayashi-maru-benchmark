@@ -5,7 +5,7 @@
   "benchmark_version": "0.3.0",
   "dataset_digest": "fe022386a6e9a1558b952df0451eeec8530c09776945b4c4d4ce7bb8a11d9955",
   "runner_revision": "c51d940deb394adaf6a39f138e0af23b2945db53",
-  "scorer_version": "0.3.0",
+  "scorer_version": "0.3.1",
   "model": "gpt-oss:20b",
   "model_revision": null,
   "provider": "ollama-cloud",

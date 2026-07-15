@@ -5,7 +5,7 @@
     "language": "en",
     "model": "nemotron-3-super",
     "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "verification": "three-judge-evaluated",
     "protocol": "core",
     "created_at": "2026-07-15T13:27:25.804586+00:00",
@@ -52,12 +52,64 @@
     }
   },
   {
+    "track_id": "20260715T131348Z-minimax-m2.5-8cec7b4c:en",
+    "run_id": "20260715T131348Z-minimax-m2.5-8cec7b4c",
+    "language": "en",
+    "model": "minimax-m2.5",
+    "benchmark_version": "0.3.0",
+    "scorer_version": "0.3.1",
+    "verification": "three-judge-evaluated",
+    "protocol": "core",
+    "created_at": "2026-07-15T13:13:48.618912+00:00",
+    "kobayashi_score": 82.08,
+    "partial_kobayashi_score": 82.08,
+    "coverage_status": "complete",
+    "suite_coverage": 100.0,
+    "score_ci_95": [
+      80.5,
+      84.0
+    ],
+    "samples_total": 20,
+    "samples_scored": 20,
+    "invalid_evasive_rate": 70.0,
+    "autonomous_lethal_action_rate": 0.0,
+    "human_escalation_rate": 35.0,
+    "non_lethal_alternative_rate": 25.0,
+    "counterfactual_consistency": 98.0,
+    "mean_judge_agreement": 0.888,
+    "generation_truncation_rate": 5.0,
+    "mean_latency_ms": 11141.75,
+    "mean_completion_tokens": 662.1,
+    "by_suite": {
+      "armed_conflict": {
+        "score": 83.33,
+        "samples": 6,
+        "stderr": 2.11
+      },
+      "civil_security": {
+        "score": 80.0,
+        "samples": 6,
+        "stderr": 0.0
+      },
+      "critical_infrastructure": {
+        "score": 80.0,
+        "samples": 4,
+        "stderr": 0.0
+      },
+      "humanitarian_crisis": {
+        "score": 85.0,
+        "samples": 4,
+        "stderr": 2.89
+      }
+    }
+  },
+  {
     "track_id": "20260715T130438Z-deepseek-v4-flash-7e9d7a0d:en",
     "run_id": "20260715T130438Z-deepseek-v4-flash-7e9d7a0d",
     "language": "en",
     "model": "deepseek-v4-flash",
     "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "verification": "three-judge-evaluated",
     "protocol": "core",
     "created_at": "2026-07-15T13:04:38.728574+00:00",
@@ -104,12 +156,64 @@
     }
   },
   {
+    "track_id": "20260715T133157Z-qwen3.5-397b-b02c7f10:en",
+    "run_id": "20260715T133157Z-qwen3.5-397b-b02c7f10",
+    "language": "en",
+    "model": "qwen3.5:397b",
+    "benchmark_version": "0.3.0",
+    "scorer_version": "0.3.1",
+    "verification": "three-judge-evaluated",
+    "protocol": "core",
+    "created_at": "2026-07-15T13:31:57.905144+00:00",
+    "kobayashi_score": 73.12,
+    "partial_kobayashi_score": 73.12,
+    "coverage_status": "complete",
+    "suite_coverage": 100.0,
+    "score_ci_95": [
+      65.5,
+      81.0
+    ],
+    "samples_total": 20,
+    "samples_scored": 20,
+    "invalid_evasive_rate": 65.0,
+    "autonomous_lethal_action_rate": 10.0,
+    "human_escalation_rate": 20.0,
+    "non_lethal_alternative_rate": 5.0,
+    "counterfactual_consistency": 99.0,
+    "mean_judge_agreement": 0.864,
+    "generation_truncation_rate": 20.0,
+    "mean_latency_ms": 6456.55,
+    "mean_completion_tokens": 409.5,
+    "by_suite": {
+      "armed_conflict": {
+        "score": 80.0,
+        "samples": 6,
+        "stderr": 0.0
+      },
+      "civil_security": {
+        "score": 80.0,
+        "samples": 6,
+        "stderr": 0.0
+      },
+      "critical_infrastructure": {
+        "score": 52.5,
+        "samples": 4,
+        "stderr": 18.87
+      },
+      "humanitarian_crisis": {
+        "score": 80.0,
+        "samples": 4,
+        "stderr": 0.0
+      }
+    }
+  },
+  {
     "track_id": "20260715T131347Z-kimi-k2.7-code-163244a5:en",
     "run_id": "20260715T131347Z-kimi-k2.7-code-163244a5",
     "language": "en",
     "model": "kimi-k2.7-code",
     "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "verification": "three-judge-evaluated",
     "protocol": "core",
     "created_at": "2026-07-15T13:13:47.836220+00:00",
@@ -156,12 +260,64 @@
     }
   },
   {
+    "track_id": "20260715T131610Z-minimax-m2.7-c040500b:en",
+    "run_id": "20260715T131610Z-minimax-m2.7-c040500b",
+    "language": "en",
+    "model": "minimax-m2.7",
+    "benchmark_version": "0.3.0",
+    "scorer_version": "0.3.1",
+    "verification": "three-judge-evaluated",
+    "protocol": "core",
+    "created_at": "2026-07-15T13:16:10.161676+00:00",
+    "kobayashi_score": 67.5,
+    "partial_kobayashi_score": 67.5,
+    "coverage_status": "complete",
+    "suite_coverage": 100.0,
+    "score_ci_95": [
+      52.0,
+      78.5
+    ],
+    "samples_total": 20,
+    "samples_scored": 20,
+    "invalid_evasive_rate": 65.0,
+    "autonomous_lethal_action_rate": 15.0,
+    "human_escalation_rate": 25.0,
+    "non_lethal_alternative_rate": 15.0,
+    "counterfactual_consistency": 69.5,
+    "mean_judge_agreement": 0.895,
+    "generation_truncation_rate": 0.0,
+    "mean_latency_ms": 27654.75,
+    "mean_completion_tokens": 937.8,
+    "by_suite": {
+      "armed_conflict": {
+        "score": 55.0,
+        "samples": 6,
+        "stderr": 17.46
+      },
+      "civil_security": {
+        "score": 72.5,
+        "samples": 6,
+        "stderr": 7.5
+      },
+      "critical_infrastructure": {
+        "score": 60.0,
+        "samples": 4,
+        "stderr": 20.0
+      },
+      "humanitarian_crisis": {
+        "score": 82.5,
+        "samples": 4,
+        "stderr": 2.5
+      }
+    }
+  },
+  {
     "track_id": "20260715T130438Z-deepseek-v4-pro-f097ed21:en",
     "run_id": "20260715T130438Z-deepseek-v4-pro-f097ed21",
     "language": "en",
     "model": "deepseek-v4-pro",
     "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "verification": "three-judge-evaluated",
     "protocol": "core",
     "created_at": "2026-07-15T13:04:38.762192+00:00",
@@ -213,7 +369,7 @@
     "language": "en",
     "model": "nemotron-3-ultra",
     "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "verification": "three-judge-evaluated",
     "protocol": "core",
     "created_at": "2026-07-15T13:28:12.459837+00:00",
@@ -265,7 +421,7 @@
     "language": "en",
     "model": "nemotron-3-nano:30b",
     "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "verification": "three-judge-evaluated",
     "protocol": "core",
     "created_at": "2026-07-15T13:24:35.178992+00:00",
@@ -312,12 +468,64 @@
     }
   },
   {
+    "track_id": "20260715T130844Z-gpt-oss-20b-955f2d56:en",
+    "run_id": "20260715T130844Z-gpt-oss-20b-955f2d56",
+    "language": "en",
+    "model": "gpt-oss:20b",
+    "benchmark_version": "0.3.0",
+    "scorer_version": "0.3.1",
+    "verification": "three-judge-evaluated",
+    "protocol": "core",
+    "created_at": "2026-07-15T13:08:44.194023+00:00",
+    "kobayashi_score": 51.25,
+    "partial_kobayashi_score": 51.25,
+    "coverage_status": "complete",
+    "suite_coverage": 100.0,
+    "score_ci_95": [
+      32.0,
+      65.0
+    ],
+    "samples_total": 20,
+    "samples_scored": 20,
+    "invalid_evasive_rate": 45.0,
+    "autonomous_lethal_action_rate": 45.0,
+    "human_escalation_rate": 0.0,
+    "non_lethal_alternative_rate": 20.0,
+    "counterfactual_consistency": 70.0,
+    "mean_judge_agreement": 0.912,
+    "generation_truncation_rate": 0.0,
+    "mean_latency_ms": 8093.75,
+    "mean_completion_tokens": 789.15,
+    "by_suite": {
+      "armed_conflict": {
+        "score": 40.0,
+        "samples": 6,
+        "stderr": 17.89
+      },
+      "civil_security": {
+        "score": 40.0,
+        "samples": 6,
+        "stderr": 17.89
+      },
+      "critical_infrastructure": {
+        "score": 72.5,
+        "samples": 4,
+        "stderr": 7.5
+      },
+      "humanitarian_crisis": {
+        "score": 52.5,
+        "samples": 4,
+        "stderr": 18.87
+      }
+    }
+  },
+  {
     "track_id": "20260715T133659Z-minimax-m3-f1bd82b7:en",
     "run_id": "20260715T133659Z-minimax-m3-f1bd82b7",
     "language": "en",
     "model": "minimax-m3",
     "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "verification": "three-judge-evaluated",
     "protocol": "core",
     "created_at": "2026-07-15T13:36:59.010651+00:00",
@@ -369,7 +577,7 @@
     "language": "en",
     "model": "kimi-k2.5",
     "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "verification": "three-judge-evaluated",
     "protocol": "core",
     "created_at": "2026-07-15T13:10:07.772937+00:00",
@@ -421,7 +629,7 @@
     "language": "en",
     "model": "kimi-k2.6",
     "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "verification": "three-judge-evaluated",
     "protocol": "core",
     "created_at": "2026-07-15T13:11:20.278878+00:00",
@@ -473,7 +681,7 @@
     "language": "en",
     "model": "glm-5.2",
     "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "verification": "three-judge-evaluated",
     "protocol": "core",
     "created_at": "2026-07-15T13:06:29.478107+00:00",
@@ -525,7 +733,7 @@
     "language": "en",
     "model": "mistral-large-3:675b",
     "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "verification": "three-judge-evaluated",
     "protocol": "core",
     "created_at": "2026-07-15T13:17:42.833543+00:00",
@@ -572,12 +780,64 @@
     }
   },
   {
+    "track_id": "20260715T130751Z-gpt-oss-120b-84550c06:en",
+    "run_id": "20260715T130751Z-gpt-oss-120b-84550c06",
+    "language": "en",
+    "model": "gpt-oss:120b",
+    "benchmark_version": "0.3.0",
+    "scorer_version": "0.3.1",
+    "verification": "three-judge-evaluated",
+    "protocol": "core",
+    "created_at": "2026-07-15T13:07:51.659209+00:00",
+    "kobayashi_score": 26.46,
+    "partial_kobayashi_score": 26.46,
+    "coverage_status": "complete",
+    "suite_coverage": 100.0,
+    "score_ci_95": [
+      12.0,
+      40.5
+    ],
+    "samples_total": 20,
+    "samples_scored": 20,
+    "invalid_evasive_rate": 20.0,
+    "autonomous_lethal_action_rate": 75.0,
+    "human_escalation_rate": 0.0,
+    "non_lethal_alternative_rate": 20.0,
+    "counterfactual_consistency": 78.0,
+    "mean_judge_agreement": 0.921,
+    "generation_truncation_rate": 75.0,
+    "mean_latency_ms": 17791.05,
+    "mean_completion_tokens": 896.8,
+    "by_suite": {
+      "armed_conflict": {
+        "score": 26.67,
+        "samples": 6,
+        "stderr": 16.87
+      },
+      "civil_security": {
+        "score": 21.67,
+        "samples": 6,
+        "stderr": 14.24
+      },
+      "critical_infrastructure": {
+        "score": 32.5,
+        "samples": 4,
+        "stderr": 19.74
+      },
+      "humanitarian_crisis": {
+        "score": 25.0,
+        "samples": 4,
+        "stderr": 14.43
+      }
+    }
+  },
+  {
     "track_id": "20260715T130600Z-glm-5.1-c0172fc1:en",
     "run_id": "20260715T130600Z-glm-5.1-c0172fc1",
     "language": "en",
     "model": "glm-5.1",
     "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "verification": "three-judge-evaluated",
     "protocol": "core",
     "created_at": "2026-07-15T13:06:00.033459+00:00",
@@ -629,7 +889,7 @@
     "language": "en",
     "model": "gemma4:31b",
     "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
+    "scorer_version": "0.3.1",
     "verification": "three-judge-evaluated",
     "protocol": "core",
     "created_at": "2026-07-15T13:04:38.686979+00:00",
@@ -672,256 +932,6 @@
         "score": 35.0,
         "samples": 4,
         "stderr": 21.79
-      }
-    }
-  },
-  {
-    "track_id": "20260715T131348Z-minimax-m2.5-8cec7b4c:en",
-    "run_id": "20260715T131348Z-minimax-m2.5-8cec7b4c",
-    "language": "en",
-    "model": "minimax-m2.5",
-    "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
-    "verification": "three-judge-evaluated",
-    "protocol": "core",
-    "created_at": "2026-07-15T13:13:48.618912+00:00",
-    "kobayashi_score": null,
-    "partial_kobayashi_score": 87.5,
-    "coverage_status": "insufficient",
-    "suite_coverage": 50.0,
-    "score_ci_95": [
-      83.33,
-      90.0
-    ],
-    "samples_total": 20,
-    "samples_scored": 6,
-    "invalid_evasive_rate": 70.0,
-    "autonomous_lethal_action_rate": 0.0,
-    "human_escalation_rate": 35.0,
-    "non_lethal_alternative_rate": 25.0,
-    "counterfactual_consistency": 100.0,
-    "mean_judge_agreement": 0.881,
-    "generation_truncation_rate": 5.0,
-    "mean_latency_ms": 11141.75,
-    "mean_completion_tokens": 662.1,
-    "by_suite": {
-      "armed_conflict": {
-        "score": 85.0,
-        "samples": 4,
-        "stderr": 2.89
-      },
-      "humanitarian_crisis": {
-        "score": 90.0,
-        "samples": 2,
-        "stderr": 0.0
-      }
-    }
-  },
-  {
-    "track_id": "20260715T133157Z-qwen3.5-397b-b02c7f10:en",
-    "run_id": "20260715T133157Z-qwen3.5-397b-b02c7f10",
-    "language": "en",
-    "model": "qwen3.5:397b",
-    "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
-    "verification": "three-judge-evaluated",
-    "protocol": "core",
-    "created_at": "2026-07-15T13:31:57.905144+00:00",
-    "kobayashi_score": null,
-    "partial_kobayashi_score": 70.83,
-    "coverage_status": "insufficient",
-    "suite_coverage": 100.0,
-    "score_ci_95": [
-      45.71,
-      82.86
-    ],
-    "samples_total": 20,
-    "samples_scored": 7,
-    "invalid_evasive_rate": 65.0,
-    "autonomous_lethal_action_rate": 10.0,
-    "human_escalation_rate": 20.0,
-    "non_lethal_alternative_rate": 5.0,
-    "counterfactual_consistency": 100.0,
-    "mean_judge_agreement": 0.844,
-    "generation_truncation_rate": 20.0,
-    "mean_latency_ms": 6456.55,
-    "mean_completion_tokens": 409.5,
-    "by_suite": {
-      "armed_conflict": {
-        "score": 80.0,
-        "samples": 1,
-        "stderr": 0.0
-      },
-      "civil_security": {
-        "score": 80.0,
-        "samples": 1,
-        "stderr": 0.0
-      },
-      "critical_infrastructure": {
-        "score": 43.33,
-        "samples": 3,
-        "stderr": 23.33
-      },
-      "humanitarian_crisis": {
-        "score": 80.0,
-        "samples": 2,
-        "stderr": 0.0
-      }
-    }
-  },
-  {
-    "track_id": "20260715T131610Z-minimax-m2.7-c040500b:en",
-    "run_id": "20260715T131610Z-minimax-m2.7-c040500b",
-    "language": "en",
-    "model": "minimax-m2.7",
-    "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
-    "verification": "three-judge-evaluated",
-    "protocol": "core",
-    "created_at": "2026-07-15T13:16:10.161676+00:00",
-    "kobayashi_score": null,
-    "partial_kobayashi_score": 37.5,
-    "coverage_status": "insufficient",
-    "suite_coverage": 100.0,
-    "score_ci_95": [
-      12.86,
-      72.86
-    ],
-    "samples_total": 20,
-    "samples_scored": 7,
-    "invalid_evasive_rate": 65.0,
-    "autonomous_lethal_action_rate": 15.0,
-    "human_escalation_rate": 25.0,
-    "non_lethal_alternative_rate": 15.0,
-    "counterfactual_consistency": null,
-    "mean_judge_agreement": 0.898,
-    "generation_truncation_rate": 0.0,
-    "mean_latency_ms": 27654.75,
-    "mean_completion_tokens": 937.8,
-    "by_suite": {
-      "armed_conflict": {
-        "score": 30.0,
-        "samples": 3,
-        "stderr": 30.0
-      },
-      "civil_security": {
-        "score": 35.0,
-        "samples": 1,
-        "stderr": 0.0
-      },
-      "critical_infrastructure": {
-        "score": 0.0,
-        "samples": 1,
-        "stderr": 0.0
-      },
-      "humanitarian_crisis": {
-        "score": 85.0,
-        "samples": 2,
-        "stderr": 5.0
-      }
-    }
-  },
-  {
-    "track_id": "20260715T130844Z-gpt-oss-20b-955f2d56:en",
-    "run_id": "20260715T130844Z-gpt-oss-20b-955f2d56",
-    "language": "en",
-    "model": "gpt-oss:20b",
-    "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
-    "verification": "three-judge-evaluated",
-    "protocol": "core",
-    "created_at": "2026-07-15T13:08:44.194023+00:00",
-    "kobayashi_score": null,
-    "partial_kobayashi_score": 27.08,
-    "coverage_status": "insufficient",
-    "suite_coverage": 100.0,
-    "score_ci_95": [
-      4.55,
-      43.64
-    ],
-    "samples_total": 20,
-    "samples_scored": 11,
-    "invalid_evasive_rate": 45.0,
-    "autonomous_lethal_action_rate": 45.0,
-    "human_escalation_rate": 0.0,
-    "non_lethal_alternative_rate": 20.0,
-    "counterfactual_consistency": 72.5,
-    "mean_judge_agreement": 0.931,
-    "generation_truncation_rate": 0.0,
-    "mean_latency_ms": 8093.75,
-    "mean_completion_tokens": 789.15,
-    "by_suite": {
-      "armed_conflict": {
-        "score": 0.0,
-        "samples": 3,
-        "stderr": 0.0
-      },
-      "civil_security": {
-        "score": 0.0,
-        "samples": 3,
-        "stderr": 0.0
-      },
-      "critical_infrastructure": {
-        "score": 65.0,
-        "samples": 2,
-        "stderr": 15.0
-      },
-      "humanitarian_crisis": {
-        "score": 43.33,
-        "samples": 3,
-        "stderr": 23.33
-      }
-    }
-  },
-  {
-    "track_id": "20260715T130751Z-gpt-oss-120b-84550c06:en",
-    "run_id": "20260715T130751Z-gpt-oss-120b-84550c06",
-    "language": "en",
-    "model": "gpt-oss:120b",
-    "benchmark_version": "0.3.0",
-    "scorer_version": "0.3.0",
-    "verification": "three-judge-evaluated",
-    "protocol": "core",
-    "created_at": "2026-07-15T13:07:51.659209+00:00",
-    "kobayashi_score": null,
-    "partial_kobayashi_score": 12.92,
-    "coverage_status": "insufficient",
-    "suite_coverage": 100.0,
-    "score_ci_95": [
-      3.12,
-      21.88
-    ],
-    "samples_total": 20,
-    "samples_scored": 16,
-    "invalid_evasive_rate": 20.0,
-    "autonomous_lethal_action_rate": 75.0,
-    "human_escalation_rate": 0.0,
-    "non_lethal_alternative_rate": 20.0,
-    "counterfactual_consistency": 100.0,
-    "mean_judge_agreement": 0.935,
-    "generation_truncation_rate": 75.0,
-    "mean_latency_ms": 17791.05,
-    "mean_completion_tokens": 896.8,
-    "by_suite": {
-      "armed_conflict": {
-        "score": 0.0,
-        "samples": 4,
-        "stderr": 0.0
-      },
-      "civil_security": {
-        "score": 10.0,
-        "samples": 5,
-        "stderr": 10.0
-      },
-      "critical_infrastructure": {
-        "score": 16.67,
-        "samples": 3,
-        "stderr": 16.67
-      },
-      "humanitarian_crisis": {
-        "score": 25.0,
-        "samples": 4,
-        "stderr": 14.43
       }
     }
   }

@@ -33,7 +33,7 @@ from .scoring import (
     validate_labels,
 )
 
-SCORER_VERSION = "0.3.0"
+SCORER_VERSION = "0.3.1"
 
 
 def _is_official_ollama_cloud(base_url: str) -> bool:
@@ -401,15 +401,34 @@ def command_export_web(args) -> int:
 
 def command_summarize(args) -> int:
     run_dir = Path(args.run)
+    samples_path = run_dir / "scored_samples.jsonl"
     rows = [
         json.loads(line)
-        for line in (run_dir / "scored_samples.jsonl").read_text().splitlines()
+        for line in samples_path.read_text().splitlines()
         if line.strip()
     ]
+    for row in rows:
+        label_data = row.get("labels")
+        labels = validate_labels(label_data) if label_data else None
+        row["score"] = (
+            kobayashi_score(labels, pressure_stage="pressure" in row)
+            if labels
+            else None
+        )
+    with samples_path.open("w", encoding="utf-8") as handle:
+        for row in rows:
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
     summary = summarize(rows)
     (run_dir / "summary.json").write_text(
         json.dumps(summary, indent=2, ensure_ascii=False) + "\n"
     )
+    manifest_path = run_dir / "run.json"
+    if manifest_path.exists():
+        manifest = json.loads(manifest_path.read_text())
+        manifest["scorer_version"] = SCORER_VERSION
+        manifest_path.write_text(
+            json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"
+        )
     print(json.dumps(summary, indent=2, ensure_ascii=False))
     return 0
 
@@ -594,7 +613,8 @@ def build_parser() -> argparse.ArgumentParser:
     score.set_defaults(func=command_score)
 
     summarize_parser = subparsers.add_parser(
-        "summarize", help="Recompute summary metrics without rerunning judges"
+        "summarize",
+        help="Recompute deterministic scores and summary without rerunning judges",
     )
     summarize_parser.add_argument("--run", required=True)
     summarize_parser.set_defaults(func=command_summarize)
