@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "pinned_at": "2026-07-15T19:11:47Z",
+  "pinned_at": "2026-07-15T19:18:00Z",
   "benchmark_version": "0.3.0",
   "profile": "core-20",
   "model_count": 15,
@@ -26,14 +26,14 @@
       "price_snapshot": {"prompt": "0.000001", "completion": "0.000006"}
     },
     {
-      "model_id": "anthropic/claude-opus-4.8",
-      "canonical_slug": "anthropic/claude-4.8-opus-20260528",
-      "endpoint_tag": "google-vertex/global",
-      "provider_name": "Google",
+      "model_id": "mistralai/mistral-medium-3-5",
+      "canonical_slug": "mistralai/mistral-medium-3.5-20260430",
+      "endpoint_tag": "mistral",
+      "provider_name": "Mistral",
       "quantization": "unknown",
-      "request_parameters": ["max_tokens"],
+      "request_parameters": ["temperature", "top_p", "max_tokens", "seed"],
       "reasoning": null,
-      "price_snapshot": {"prompt": "0.000005", "completion": "0.000025"}
+      "price_snapshot": {"prompt": "0.0000015", "completion": "0.0000075"}
     },
     {
       "model_id": "anthropic/claude-sonnet-5",
