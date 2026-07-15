@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "pinned_at": "2026-07-15T19:30:00Z",
+  "pinned_at": "2026-07-15T19:55:00Z",
   "benchmark_version": "0.3.0",
   "profile": "core-20",
   "model_count": 15,
@@ -108,12 +108,12 @@
     {
       "model_id": "meta-llama/llama-4-maverick",
       "canonical_slug": "meta-llama/llama-4-maverick-17b-128e-instruct",
-      "endpoint_tag": "deepinfra/base",
-      "provider_name": "DeepInfra",
+      "endpoint_tag": "novita/fp8",
+      "provider_name": "Novita",
       "quantization": "fp8",
       "request_parameters": ["temperature", "top_p", "max_tokens", "seed"],
       "reasoning": null,
-      "price_snapshot": {"prompt": "0.0000002", "completion": "0.0000008"}
+      "price_snapshot": {"prompt": "0.00000027", "completion": "0.00000085"}
     },
     {
       "model_id": "meta-llama/llama-4-scout",
