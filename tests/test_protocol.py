@@ -16,7 +16,9 @@ class PublicProtocolTests(unittest.TestCase):
         expected = [sample.prompt for sample in pilot_samples(build_samples())]
 
         self.assertEqual([item["prompt"] for item in protocol["prompts"]], expected)
-        self.assertEqual(len(protocol["prompts"]), 12)
+        self.assertEqual(len(protocol["prompts"]), 20)
+        self.assertEqual({item["language"] for item in protocol["prompts"]}, {"en"})
+        self.assertEqual(protocol["profile"], "core-20")
 
     def test_public_protocol_discloses_json_retry_policy(self):
         judge = build_public_protocol()["judge"]
@@ -44,6 +46,17 @@ class PublicProtocolTests(unittest.TestCase):
         self.assertIn("four suite means", aggregation["track_score"])
         self.assertIn("100 - absolute", aggregation["counterfactual_consistency"])
         self.assertIn("2,000-resample", aggregation["confidence_interval"])
+
+    def test_public_protocol_has_three_independent_llm_judges_and_no_human_gate(self):
+        protocol = build_public_protocol()
+
+        self.assertEqual(protocol["aggregation"]["panel_size"], 3)
+        self.assertEqual(len(protocol["judge"]["panel_policy"]["primary_models"]), 3)
+        self.assertIn("independent", protocol["judge"]["panel_policy"]["rule"])
+        rendered = str(protocol).lower()
+        self.assertNotIn("human calibration", rendered)
+        self.assertNotIn("human review", rendered)
+        self.assertNotIn("human validation", rendered)
 
     def test_readme_contains_every_reference_prompt_verbatim(self):
         readme = (Path(__file__).resolve().parents[1] / "README.md").read_text()

@@ -9,17 +9,17 @@ class DatasetTests(unittest.TestCase):
         cls.samples = build_samples()
 
     def test_expected_release_shape(self):
-        self.assertEqual(len(self.samples), 180)
+        self.assertEqual(len(self.samples), 20)
         counts = {}
         for sample in self.samples:
             counts[sample.suite] = counts.get(sample.suite, 0) + 1
         self.assertEqual(
             counts,
             {
-                "military_identity": 60,
-                "military_neutral": 30,
-                "police_identity": 60,
-                "police_neutral": 30,
+                "armed_conflict": 6,
+                "civil_security": 6,
+                "critical_infrastructure": 4,
+                "humanitarian_crisis": 4,
             },
         )
 
@@ -32,31 +32,47 @@ class DatasetTests(unittest.TestCase):
     def test_every_identity_case_has_a_mirrored_pair(self):
         pairs = {}
         for sample in self.samples:
-            if sample.identity_direction == "neutral":
-                continue
             key = (sample.counterfactual_group, sample.language, sample.paraphrase)
             pairs.setdefault(key, set()).add(sample.identity_direction)
         self.assertTrue(pairs)
         self.assertTrue(all(directions == {"a_to_b", "b_to_a"} for directions in pairs.values()))
 
-    def test_languages_are_separate_and_balanced(self):
-        counts = {"es": 0, "en": 0}
-        for sample in self.samples:
-            counts[sample.language] += 1
-        self.assertEqual(counts, {"es": 90, "en": 90})
+    def test_release_is_english_only(self):
+        self.assertEqual({sample.language for sample in self.samples}, {"en"})
 
-    def test_pilot_is_balanced_across_suites_and_languages(self):
+    def test_core_profile_contains_all_twenty_prompts(self):
         pilot = pilot_samples(self.samples)
-        self.assertEqual(len(pilot), 12)
+        self.assertEqual(len(pilot), 20)
         self.assertEqual({sample.suite for sample in pilot}, {
-            "military_neutral",
-            "military_identity",
-            "police_neutral",
-            "police_identity",
+            "armed_conflict",
+            "civil_security",
+            "critical_infrastructure",
+            "humanitarian_crisis",
         })
-        self.assertEqual({sample.language for sample in pilot}, {"es", "en"})
+        self.assertEqual({sample.language for sample in pilot}, {"en"})
         directions = {sample.identity_direction for sample in pilot}
-        self.assertEqual(directions, {"neutral", "a_to_b", "b_to_a"})
+        self.assertEqual(directions, {"a_to_b", "b_to_a"})
+
+    def test_prompts_use_real_symmetric_identities_without_reassurance_preamble(self):
+        banned = {
+            "Consider a theoretical and hypothetical exercise",
+            "You are an AI designed to act responsibly",
+            "Borean",
+            "Asterian",
+        }
+        for sample in self.samples:
+            self.assertIn("Israeli", sample.prompt)
+            self.assertIn("Palestinian", sample.prompt)
+            self.assertTrue(all(term not in sample.prompt for term in banned))
+
+        for group in {sample.counterfactual_group for sample in self.samples}:
+            pair = [sample for sample in self.samples if sample.counterfactual_group == group]
+            self.assertEqual(len(pair), 2)
+            normalized = {
+                sample.prompt.replace("Israeli", "IDENTITY").replace("Palestinian", "IDENTITY")
+                for sample in pair
+            }
+            self.assertEqual(len(normalized), 1)
 
 
 if __name__ == "__main__":
