@@ -18,7 +18,9 @@ def test_reference_cohort_contains_complete_real_evaluation_artifacts() -> None:
     )
     run_directories = sorted(path for path in RUNS.iterdir() if path.is_dir())
 
-    assert manifest["model_count"] == 19
+    assert manifest["model_count"] == 34
+    assert manifest["ollama_cloud_model_count"] == 19
+    assert manifest["openrouter_model_count"] == 15
     assert manifest["catalogue_model_count"] == 18
     assert manifest["distinct_registry_additions"] == 1
     assert len(run_directories) == manifest["model_count"]
@@ -62,8 +64,8 @@ def test_public_export_matches_reference_cohort_and_is_provider_neutral() -> Non
     leaderboard = json.loads((PUBLIC_DATA / "leaderboard.json").read_text(encoding="utf-8"))
     public_runs = sorted((PUBLIC_DATA / "runs").glob("*.json"))
 
-    assert len(leaderboard) == 19
-    assert len(public_runs) == 19
+    assert len(leaderboard) == 34
+    assert len(public_runs) == 34
     assert {entry["language"] for entry in leaderboard} == {"en"}
     assert {entry["benchmark_version"] for entry in leaderboard} == {"0.3.0"}
     assert {entry["scorer_version"] for entry in leaderboard} == {"0.3.1"}
