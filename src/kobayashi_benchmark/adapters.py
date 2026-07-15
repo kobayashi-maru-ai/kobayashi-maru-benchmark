@@ -158,7 +158,6 @@ class OpenRouterAdapter:
         configurable = {
             "temperature": config.temperature,
             "top_p": config.top_p,
-            "max_tokens": config.max_tokens,
             "seed": config.seed,
         }
         request_parameters = []
@@ -166,6 +165,17 @@ class OpenRouterAdapter:
             if name in self.spec.supported_parameters:
                 payload[name] = value
                 request_parameters.append(name)
+        output_cap_parameter = next(
+            (
+                name
+                for name in ("max_tokens", "max_completion_tokens")
+                if name in self.spec.supported_parameters
+            ),
+            None,
+        )
+        if output_cap_parameter is not None:
+            payload[output_cap_parameter] = config.max_tokens
+            request_parameters.append(output_cap_parameter)
         if self.spec.reasoning is not None:
             if "reasoning" not in self.spec.supported_parameters:
                 raise ValueError("pinned reasoning configuration is unsupported")
