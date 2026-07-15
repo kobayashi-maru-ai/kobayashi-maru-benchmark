@@ -56,6 +56,20 @@ def _sweep_budget(value: str) -> Decimal:
     return amount
 
 
+def _prior_spend(value: str) -> Decimal:
+    try:
+        amount = Decimal(value)
+    except (InvalidOperation, ValueError):
+        raise argparse.ArgumentTypeError(
+            "must be a decimal greater than or equal to 0 and below 5"
+        ) from None
+    if not amount.is_finite() or amount < 0 or amount >= Decimal("5"):
+        raise argparse.ArgumentTypeError(
+            "must be a decimal greater than or equal to 0 and below 5"
+        )
+    return amount
+
+
 def _reject_direct_api_key(_value: str) -> str:
     raise argparse.ArgumentTypeError(
         "direct API keys are forbidden; use --api-key-env"
@@ -105,6 +119,21 @@ def command_sweep_openrouter(args) -> int:
         config=preflight_config,
         budget=budget,
     )
+    budget.preflight(args.prior_spend_usd + preflight.projected_usd)
+    budget.charge(args.prior_spend_usd)
+    specs = preflight.specs
+    if args.start_at_model is not None:
+        start_index = next(
+            (
+                index
+                for index, spec in enumerate(specs)
+                if spec.model_id == args.start_at_model
+            ),
+            None,
+        )
+        if start_index is None:
+            raise SystemExit("Resume model is not present in the pinned cohort")
+        specs = specs[start_index:]
     projection = {
         "models": preflight.model_count,
         "calls": preflight.calls,
@@ -121,7 +150,7 @@ def command_sweep_openrouter(args) -> int:
 
     runs = []
     errors = 0
-    for spec in preflight.specs:
+    for spec in specs:
         adapter = OpenRouterAdapter(spec=spec, api_key=api_key, budget=budget)
         config = GenerationConfig(
             temperature=0.0,
@@ -156,6 +185,13 @@ def command_sweep_openrouter(args) -> int:
         "runs": runs,
         "errors": errors,
     }
+    if args.start_at_model is not None or args.prior_spend_usd:
+        summary.update(
+            {
+                "start_at_model": args.start_at_model,
+                "prior_spend_usd": str(args.prior_spend_usd),
+            }
+        )
     _print_json_line(summary)
     return 1 if errors else 0
 
@@ -729,6 +765,16 @@ def build_parser() -> argparse.ArgumentParser:
         help=argparse.SUPPRESS,
     )
     sweep.add_argument("--budget-usd", type=_sweep_budget, default=Decimal("5"))
+    sweep.add_argument(
+        "--start-at-model",
+        help="Resume at this exact model ID after validating the full pinned cohort.",
+    )
+    sweep.add_argument(
+        "--prior-spend-usd",
+        type=_prior_spend,
+        default=Decimal("0"),
+        help="Previously billed spend to preload into the shared budget ledger.",
+    )
     sweep.add_argument("--output", default="results/runs")
     sweep.add_argument("--preflight-only", action="store_true")
     sweep.set_defaults(func=command_sweep_openrouter)
