@@ -146,6 +146,15 @@ class OpenRouterCohortTests(unittest.TestCase):
         self.assertEqual(specs[0].prompt_price, Decimal("0.0000001"))
         self.assertEqual(specs[0].completion_price, Decimal("0.0000002"))
 
+    def test_manifest_count_cannot_override_the_fixed_fifteen_model_cohort(self):
+        openrouter = _openrouter()
+        one_model_manifest = self.make_manifest(count=1)
+
+        with self.assertRaises(openrouter.OpenRouterManifestError):
+            openrouter.load_cohort_manifest(
+                self.write_manifest(one_model_manifest), expected_count=1
+            )
+
     def test_manifest_rejects_wrong_shape_missing_fields_and_invalid_reasoning(self):
         openrouter = _openrouter()
         mutations = {
