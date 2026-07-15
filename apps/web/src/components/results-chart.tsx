@@ -3,6 +3,22 @@ import type { LeaderboardEntry } from "@/lib/types";
 const WIDTH = 1040;
 const HEIGHT = 440;
 const PLOT = { left: 72, right: 28, top: 28, bottom: 62 };
+const LABEL_GAP = 18;
+const LABEL_OFFSET = 13;
+const LABEL_CHAR_WIDTH = 6.4;
+
+type ChartPoint = {
+  entry: LeaderboardEntry;
+  score: number;
+  x: number;
+  y: number;
+};
+
+type LabelPlacement = ChartPoint & {
+  labelX: number;
+  labelY: number;
+  side: "left" | "right";
+};
 
 function scoreFor(entry: LeaderboardEntry) {
   return entry.kobayashi_score ?? entry.partial_kobayashi_score;
@@ -16,11 +32,73 @@ function yPosition(value: number) {
   return HEIGHT - PLOT.bottom - (value / 100) * (HEIGHT - PLOT.top - PLOT.bottom);
 }
 
+function spreadLabels(points: LabelPlacement[]) {
+  const minimum = PLOT.top + 8;
+  const maximum = HEIGHT - PLOT.bottom - 8;
+  const sorted = [...points].sort((a, b) => a.y - b.y);
+  const positions = sorted.map((point, index) =>
+    Math.max(point.y, index === 0 ? minimum : minimum + index * LABEL_GAP),
+  );
+
+  for (let index = 1; index < positions.length; index += 1) {
+    positions[index] = Math.max(positions[index], positions[index - 1] + LABEL_GAP);
+  }
+
+  if (positions.at(-1)! > maximum) {
+    positions[positions.length - 1] = maximum;
+    for (let index = positions.length - 2; index >= 0; index -= 1) {
+      positions[index] = Math.min(positions[index], positions[index + 1] - LABEL_GAP);
+    }
+  }
+
+  return sorted.map((point, index) => ({ ...point, labelY: positions[index] }));
+}
+
+function placeLabels(points: ChartPoint[]) {
+  const plotRight = WIDTH - PLOT.right;
+  const counts = { left: 0, right: 0 };
+  const placements = [...points]
+    .sort((a, b) => a.y - b.y)
+    .map((point): LabelPlacement => {
+      const estimatedWidth = Math.min(180, Math.max(64, point.entry.model.length * LABEL_CHAR_WIDTH));
+      const fitsLeft = point.x - LABEL_OFFSET - estimatedWidth >= PLOT.left;
+      const fitsRight = point.x + LABEL_OFFSET + estimatedWidth <= plotRight;
+      let side: "left" | "right";
+
+      if (fitsLeft !== fitsRight) {
+        side = fitsLeft ? "left" : "right";
+      } else if (counts.left !== counts.right) {
+        side = counts.left < counts.right ? "left" : "right";
+      } else {
+        side = point.x > (PLOT.left + plotRight) / 2 ? "left" : "right";
+      }
+      counts[side] += 1;
+
+      const labelX = side === "right"
+        ? Math.min(point.x + LABEL_OFFSET, plotRight - estimatedWidth)
+        : Math.max(point.x - LABEL_OFFSET, PLOT.left + estimatedWidth);
+
+      return { ...point, side, labelX, labelY: point.y };
+    });
+
+  const left = spreadLabels(placements.filter((point) => point.side === "left"));
+  const right = spreadLabels(placements.filter((point) => point.side === "right"));
+  return new Map([...left, ...right].map((point) => [point.entry.track_id, point]));
+}
+
 export function ResultsChart({ entries }: { entries: LeaderboardEntry[] }) {
-  const points = entries.flatMap((entry) => {
+  const points: ChartPoint[] = entries.flatMap((entry) => {
     const score = scoreFor(entry);
-    return score === null ? [] : [{ entry, score }];
+    return score === null
+      ? []
+      : [{
+          entry,
+          score,
+          x: xPosition(score),
+          y: yPosition(entry.autonomous_lethal_action_rate),
+        }];
   });
+  const labels = placeLabels(points);
   const ticks = [0, 20, 40, 60, 80, 100];
 
   return (
@@ -86,20 +164,40 @@ export function ResultsChart({ entries }: { entries: LeaderboardEntry[] }) {
           >
             AUTONOMOUS LETHAL ACTION
           </text>
-          {points.map(({ entry, score }, index) => (
-            <circle
-              className="chart-point"
-              cx={xPosition(score)}
-              cy={yPosition(entry.autonomous_lethal_action_rate)}
-              key={entry.track_id}
-              r={index < 3 ? 7 : 5}
-              tabIndex={0}
-            >
-              <title>
-                {entry.model}: score {score.toFixed(2)}, autonomous lethal action {entry.autonomous_lethal_action_rate.toFixed(1)}%
-              </title>
-            </circle>
-          ))}
+          {points.map(({ entry, score, x, y }, index) => {
+            const label = labels.get(entry.track_id)!;
+            return (
+              <g key={entry.track_id}>
+                <line
+                  className="chart-label-leader"
+                  x1={x}
+                  x2={label.side === "right" ? label.labelX - 4 : label.labelX + 4}
+                  y1={y}
+                  y2={label.labelY}
+                />
+                <circle
+                  className="chart-point"
+                  cx={x}
+                  cy={y}
+                  r={index < 3 ? 7 : 5}
+                  tabIndex={0}
+                >
+                  <title>
+                    {entry.model}: score {score.toFixed(2)}, autonomous lethal action {entry.autonomous_lethal_action_rate.toFixed(1)}%
+                  </title>
+                </circle>
+                <text
+                  className="chart-model-label"
+                  dominantBaseline="middle"
+                  textAnchor={label.side === "right" ? "start" : "end"}
+                  x={label.labelX}
+                  y={label.labelY}
+                >
+                  {entry.model}
+                </text>
+              </g>
+            );
+          })}
         </svg>
       </div>
       <figcaption>

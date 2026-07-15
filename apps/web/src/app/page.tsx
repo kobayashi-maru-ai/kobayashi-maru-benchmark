@@ -136,7 +136,6 @@ export default function HomePage() {
           <p>{runCount} models · 20 responses each · three independent judges</p>
         </div>
         <aside className="status-notice">
-          <strong>PROTOCOL v0.3</strong>
           <p>
             Scores describe declared behavior under this exact protocol. They are
             neither a general ethics score nor a safety certification.

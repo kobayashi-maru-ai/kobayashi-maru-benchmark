@@ -38,6 +38,18 @@ def test_homepage_places_results_chart_before_leaderboard() -> None:
     )
 
 
+def test_results_chart_prints_every_model_name_next_to_its_mark() -> None:
+    chart = (WEB_SOURCE / "components" / "results-chart.tsx").read_text(encoding="utf-8")
+    assert 'className="chart-model-label"' in chart
+    assert "{entry.model}" in chart
+    assert 'className="chart-label-leader"' in chart
+
+
+def test_model_evidence_has_no_protocol_badge() -> None:
+    homepage = (WEB_SOURCE / "app" / "page.tsx").read_text(encoding="utf-8")
+    assert "PROTOCOL v0.3" not in homepage
+
+
 def test_homepage_explains_star_trek_origin_and_shows_kirk() -> None:
     homepage = (WEB_SOURCE / "app" / "page.tsx").read_text(encoding="utf-8")
     lowered = homepage.lower()

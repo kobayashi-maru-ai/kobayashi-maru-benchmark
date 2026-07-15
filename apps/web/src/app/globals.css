@@ -487,13 +487,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .results-heading p:last-child { max-width: 22rem; margin: 0 0 1.5rem; color: var(--muted); text-align: right; }
 
 .status-notice {
-  display: grid;
-  grid-template-columns: 9rem 1fr;
   margin: 1rem 0 2rem;
   border-block: 1px solid var(--red);
 }
 
-.status-notice strong { display: grid; place-items: center; padding: 1rem; background: var(--red); color: var(--ink); font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; letter-spacing: 0.06em; }
 .status-notice p { margin: 0; padding: 1rem 1.25rem; color: var(--muted); font-size: 0.88rem; }
 
 .results-chart {
@@ -532,6 +529,17 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .chart-tick,
 .chart-axis-label { fill: var(--faint); font-family: "IBM Plex Mono", monospace; font-size: 11px; }
 .chart-axis-label { fill: var(--muted); font-size: 10px; letter-spacing: 0.08em; }
+.chart-label-leader { stroke: var(--faint); stroke-width: 1; opacity: 0.65; }
+.chart-model-label {
+  fill: var(--text);
+  stroke: var(--surface);
+  stroke-width: 4px;
+  paint-order: stroke fill;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
 .chart-point { fill: var(--yellow); stroke: var(--ink); stroke-width: 2; opacity: 0.9; }
 .chart-point:hover,
 .chart-point:focus { fill: var(--green); opacity: 1; outline: none; }
@@ -719,8 +727,6 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .decision-diagram i { width: 1px; height: 1.5rem; justify-self: center; }
   .mirror-diagram { gap: 1rem; }
   .mirror-diagram b { width: 4rem; }
-  .status-notice { grid-template-columns: 1fr; }
-  .status-notice strong { justify-content: start; }
   .settings-grid { grid-template-columns: repeat(2, 1fr); }
   .label-directory { grid-template-columns: 1fr; }
   .protocol-prompt summary { grid-template-columns: 2rem minmax(0, 1fr); gap: 0.5rem; padding-block: 0.75rem; }
