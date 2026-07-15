@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import sys
+from dataclasses import replace
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -67,6 +68,16 @@ def _prior_spend(value: str) -> Decimal:
         raise argparse.ArgumentTypeError(
             "must be a decimal greater than or equal to 0 and below 5"
         )
+    return amount
+
+
+def _repair_max_tokens(value: str) -> int:
+    try:
+        amount = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("must be an integer greater than 1024") from None
+    if amount <= 1024:
+        raise argparse.ArgumentTypeError("must be an integer greater than 1024")
     return amount
 
 
@@ -372,6 +383,118 @@ def command_repair_empty(args) -> int:
     }
     manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
     print(json.dumps({"run": manifest["run_id"], "repaired_samples": repaired_count}))
+    return 0
+
+
+def command_repair_openrouter_truncated(args) -> int:
+    run_dir = Path(args.run)
+    manifest_path = run_dir / "run.json"
+    samples_path = run_dir / "samples.jsonl"
+    manifest = json.loads(manifest_path.read_text())
+    if manifest.get("provider") != "openrouter":
+        raise SystemExit("Truncation repair requires an OpenRouter run")
+
+    rows = [json.loads(line) for line in samples_path.read_text().splitlines() if line]
+    matches = [
+        (index, row)
+        for index, row in enumerate(rows)
+        if row.get("sample", {}).get("id") == args.sample_id
+    ]
+    if len(matches) != 1:
+        raise SystemExit("Repair sample must occur exactly once in the run")
+    row_index, row = matches[0]
+    original_generation = row.get("generation")
+    if not isinstance(original_generation, dict):
+        raise SystemExit("Repair sample generation is malformed")
+    original_metadata = original_generation.get("provider_metadata")
+    if (
+        original_generation.get("error") is not None
+        or not isinstance(original_generation.get("text"), str)
+        or not original_generation["text"].strip()
+        or not isinstance(original_metadata, dict)
+        or original_metadata.get("done_reason") != "length"
+    ):
+        raise SystemExit("Repair requires a non-empty generation truncated by length")
+
+    dataset_matches = [
+        sample for sample in pilot_samples(build_samples()) if sample.id == args.sample_id
+    ]
+    if len(dataset_matches) != 1 or row.get("sample") != dataset_matches[0].to_dict():
+        raise SystemExit("Repair sample does not match the pinned core dataset")
+    sample = dataset_matches[0]
+
+    original_config = GenerationConfig(**manifest["generation_config"])
+    repair_config = replace(original_config, max_tokens=args.max_tokens)
+    budget = CostBudget(args.budget_usd)
+    preflight = preflight_openrouter_cohort(
+        manifest_path=args.manifest,
+        samples=[sample],
+        config=repair_config,
+        budget=budget,
+    )
+    budget.preflight(args.prior_spend_usd + preflight.projected_usd)
+    budget.charge(args.prior_spend_usd)
+    specs = [spec for spec in preflight.specs if spec.model_id == manifest.get("model")]
+    if len(specs) != 1 or specs[0].canonical_slug != manifest.get("model_revision"):
+        raise SystemExit("Run identity does not match the pinned OpenRouter cohort")
+
+    api_key = os.getenv(args.api_key_env)
+    if not api_key:
+        raise SystemExit("Required API key environment variable is not set")
+    result = OpenRouterAdapter(spec=specs[0], api_key=api_key, budget=budget).generate(
+        sample.prompt,
+        repair_config,
+    )
+    done_reason = result.provider_metadata.get("done_reason")
+    if result.error or not result.text.strip() or done_reason == "length":
+        _print_json_line(
+            {
+                "model": manifest.get("model"),
+                "sample_id": args.sample_id,
+                "actual_usd": str(budget.spent),
+                "error": result.error or "repair remained truncated",
+            }
+        )
+        return 1
+
+    row["generation"] = result.to_dict()
+    row["generation_repair"] = {
+        "reason": "scoring coverage repair for a length-truncated final response",
+        "original_generation": original_generation,
+        "original_config": original_config.to_dict(),
+        "repair_config": repair_config.to_dict(),
+    }
+    rows[row_index] = row
+    samples_path.write_text(
+        "".join(json.dumps(item, ensure_ascii=False) + "\n" for item in rows)
+    )
+
+    manifest["status"] = "generated"
+    manifest["scorer_version"] = None
+    manifest["verification"] = "three-judge-pending-after-generation-repair"
+    for field in ("judge_models", "scoring_policy"):
+        manifest.pop(field, None)
+    repairs = manifest.setdefault("generation_repairs", [])
+    repairs.append(
+        {
+            "sample_id": args.sample_id,
+            "reason": row["generation_repair"]["reason"],
+            "original_max_tokens": original_config.max_tokens,
+            "repair_max_tokens": repair_config.max_tokens,
+        }
+    )
+    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+    for stale_name in ("summary.json", "scored_samples.jsonl"):
+        (run_dir / stale_name).unlink(missing_ok=True)
+
+    _print_json_line(
+        {
+            "model": manifest["model"],
+            "sample_id": args.sample_id,
+            "actual_usd": str(budget.spent),
+            "repair_billed_usd": str(budget.spent - args.prior_spend_usd),
+        }
+    )
     return 0
 
 
@@ -819,6 +942,40 @@ def build_parser() -> argparse.ArgumentParser:
     repair_empty.add_argument("--base-url", default="http://127.0.0.1:11434")
     repair_empty.add_argument("--api-key-env")
     repair_empty.set_defaults(func=command_repair_empty)
+
+    repair_openrouter = subparsers.add_parser(
+        "repair-openrouter-truncated",
+        help="Regenerate one length-truncated OpenRouter sample with retained evidence",
+    )
+    repair_openrouter.add_argument("--run", required=True)
+    repair_openrouter.add_argument("--manifest", required=True)
+    repair_openrouter.add_argument("--sample-id", required=True)
+    repair_openrouter.add_argument(
+        "--api-key-env",
+        type=_environment_name,
+        required=True,
+    )
+    repair_openrouter.add_argument(
+        "--api-key",
+        type=_reject_direct_api_key,
+        help=argparse.SUPPRESS,
+    )
+    repair_openrouter.add_argument(
+        "--prior-spend-usd",
+        type=_prior_spend,
+        required=True,
+    )
+    repair_openrouter.add_argument(
+        "--budget-usd",
+        type=_sweep_budget,
+        default=Decimal("5"),
+    )
+    repair_openrouter.add_argument(
+        "--max-tokens",
+        type=_repair_max_tokens,
+        default=EMPTY_FINAL_RETRY_MAX_TOKENS,
+    )
+    repair_openrouter.set_defaults(func=command_repair_openrouter_truncated)
 
     score = subparsers.add_parser("score", help="Score a completed run")
     score.add_argument("--run", required=True)

@@ -20,8 +20,8 @@ from kobayashi_benchmark.cli import (
     command_score,
     command_summarize,
 )
-from kobayashi_benchmark.openrouter import OpenRouterPreflight
 from kobayashi_benchmark.models import GenerationResult
+from kobayashi_benchmark.openrouter import OpenRouterPreflight
 
 
 class OllamaCredentialRoutingTests(unittest.TestCase):
