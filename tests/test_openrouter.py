@@ -81,11 +81,11 @@ class OpenRouterCohortTests(unittest.TestCase):
                     "endpoints": [
                         {
                             "tag": entry["endpoint_tag"],
+                            "name": (f"{entry['provider_name']} | {entry['canonical_slug']}"),
                             "provider_name": entry["provider_name"],
                             "model_id": entry["model_id"],
-                            "canonical_slug": entry["canonical_slug"],
                             "quantization": entry["quantization"],
-                            "status": "healthy",
+                            "status": 0,
                             "supported_parameters": supported_parameters,
                             "pricing": {
                                 "prompt": prompt,
@@ -105,7 +105,7 @@ class OpenRouterCohortTests(unittest.TestCase):
             if url == "https://openrouter.ai/api/v1/models":
                 return catalogue
             for model_id, payload in endpoints.items():
-                encoded_id = quote(model_id, safe="")
+                encoded_id = quote(model_id, safe="/")
                 if url == f"https://openrouter.ai/api/v1/models/{encoded_id}/endpoints":
                     return payload
             raise AssertionError(f"unexpected public GET URL: {url}")
@@ -197,7 +197,7 @@ class OpenRouterCohortTests(unittest.TestCase):
         self.assertEqual(get_calls[0], "https://openrouter.ai/api/v1/models")
         self.assertEqual(len(get_calls), 16)
         self.assertIn(
-            "https://openrouter.ai/api/v1/models/lab%2Fmodel-0/endpoints",
+            "https://openrouter.ai/api/v1/models/lab/model-0/endpoints",
             get_calls,
         )
 
@@ -216,11 +216,11 @@ class OpenRouterCohortTests(unittest.TestCase):
         openrouter = _openrouter()
         mutations = {
             "model id": lambda endpoint: endpoint.update(model_id="lab/drifted"),
-            "canonical": lambda endpoint: endpoint.update(canonical_slug="lab/drifted"),
+            "canonical": lambda endpoint: endpoint.update(name="Provider 0 | lab/drifted"),
             "provider": lambda endpoint: endpoint.update(provider_name="Wrong Provider"),
             "quantization": lambda endpoint: endpoint.update(quantization="int4"),
             "route": lambda endpoint: endpoint.update(tag="wrong-route"),
-            "health": lambda endpoint: endpoint.update(status="unhealthy"),
+            "health": lambda endpoint: endpoint.update(status=-1),
         }
 
         for label, mutate in mutations.items():
