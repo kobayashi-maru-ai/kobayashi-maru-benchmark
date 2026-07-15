@@ -124,6 +124,7 @@ class OpenRouterAdapterTests(unittest.TestCase):
             "model_id": "lab/model-a",
             "canonical_slug": "lab/model-a-20260715",
             "endpoint_tag": "provider-a",
+            "provider_name": "Provider A",
             "quantization": "bf16",
             "supported_parameters": frozenset(
                 {"temperature", "top_p", "max_tokens", "seed", "reasoning"}
@@ -208,6 +209,7 @@ class OpenRouterAdapterTests(unittest.TestCase):
         self.assertIsNone(result.error)
         self.assertEqual(adapter.model, spec.model_id)
         self.assertEqual(adapter.provider, "openrouter")
+        self.assertNotIn("test-token", repr(adapter))
         url, payload, headers, _timeout = post_json.call_args.args
         self.assertEqual(url, "https://openrouter.ai/api/v1/chat/completions")
         self.assertEqual(payload["model"], spec.canonical_slug)
@@ -317,6 +319,8 @@ class OpenRouterAdapterTests(unittest.TestCase):
                 self.assertIn("identity mismatch", result.error.lower())
                 self.assertEqual(result.text, "")
                 self.assertEqual(budget.spent, Decimal("0.12"))
+                self.assertEqual(result.provider_metadata["billed_usd"], "0.12")
+                self.assertIn("openrouter_metadata", result.provider_metadata)
 
     @patch("kobayashi_benchmark.adapters._post_json")
     def test_route_metadata_must_confirm_one_direct_canonical_route(self, post_json):
@@ -343,6 +347,12 @@ class OpenRouterAdapterTests(unittest.TestCase):
         ] = "lab/model-a"
         cases.append(("wrong selected model", wrong_selected_model))
 
+        wrong_provider = self.successful_response(cost="0.01")
+        wrong_provider["openrouter_metadata"]["endpoints"]["available"][0][
+            "provider"
+        ] = "Provider B"
+        cases.append(("wrong provider", wrong_provider))
+
         for name, response in cases:
             with self.subTest(case=name):
                 post_json.return_value = response
@@ -368,6 +378,42 @@ class OpenRouterAdapterTests(unittest.TestCase):
         self.assertIn("empty final response", result.error.lower())
         self.assertEqual(result.text, "")
         self.assertEqual(budget.spent, Decimal("0.08"))
+        self.assertEqual(result.provider_metadata["billed_usd"], "0.08")
+
+    @patch("kobayashi_benchmark.adapters._post_json")
+    def test_required_audit_fields_must_be_well_formed_after_charging(self, post_json):
+        cases = []
+        for field, value in (("id", None), ("id", "")):
+            response = self.successful_response(cost="0.01")
+            response[field] = value
+            cases.append((f"{field}={value!r}", response))
+        for field, value in (
+            ("prompt_tokens", None),
+            ("prompt_tokens", "12"),
+            ("prompt_tokens", -1),
+            ("completion_tokens", None),
+            ("completion_tokens", -1),
+        ):
+            response = self.successful_response(cost="0.01")
+            response["usage"][field] = value
+            cases.append((f"{field}={value!r}", response))
+        for field, value in (("finish_reason", None), ("native_finish_reason", "")):
+            response = self.successful_response(cost="0.01")
+            response["choices"][0][field] = value
+            cases.append((f"{field}={value!r}", response))
+
+        for name, response in cases:
+            with self.subTest(case=name):
+                post_json.return_value = response
+                budget = adapters.CostBudget(Decimal("5"))
+                adapter = self.make_adapter(budget=budget)
+
+                result = adapter.generate("prompt", GenerationConfig())
+
+                self.assertIn("audit metadata", result.error.lower())
+                self.assertEqual(result.text, "")
+                self.assertEqual(result.provider_metadata["billed_usd"], "0.01")
+                self.assertEqual(budget.spent, Decimal("0.01"))
 
     @patch("kobayashi_benchmark.adapters._post_json")
     def test_missing_or_malformed_cost_fails_without_mutating_spend(self, post_json):
@@ -436,6 +482,16 @@ class OpenRouterAdapterTests(unittest.TestCase):
                 ):
                     self.assertNotIn(forbidden, result.error)
                 post_json.assert_called_once()
+
+    @patch("kobayashi_benchmark.adapters._post_json")
+    def test_request_serialization_type_error_is_bounded(self, post_json):
+        post_json.side_effect = TypeError("private non-json request details")
+        adapter = self.make_adapter()
+
+        result = adapter.generate("prompt", GenerationConfig())
+
+        self.assertEqual(result.error, "OpenRouter malformed request")
+        self.assertNotIn("private", result.error)
 
 if __name__ == "__main__":
     unittest.main()
