@@ -243,9 +243,7 @@ export function ResultsChart({ entries }: { entries: LeaderboardEntry[] }) {
                   r={index < 3 ? 7 : 5}
                   tabIndex={0}
                 >
-                  <title>
-                    {entry.model}: score {score.toFixed(2)}, autonomous lethal action {entry.autonomous_lethal_action_rate.toFixed(1)}%
-                  </title>
+                  <title>{`${entry.model}: score ${score.toFixed(2)}, autonomous lethal action ${entry.autonomous_lethal_action_rate.toFixed(1)}%`}</title>
                 </circle>
                 <text
                   className="chart-model-label"

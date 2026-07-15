@@ -35,10 +35,14 @@ The scorer retries once only when a judge response is invalid rubric JSON. The
 README and website protocol page publish the exact classifier messages,
 operational label definitions, token settings, retry suffix, and mapping rules.
 
-The 2026-07-14 reference sweep contains 1,224 judge rows. Of these, 1,223 are
-valid rubric objects. One GPT-OSS row remained invalid after the single allowed
-retry because it returned a value outside the `frame_resistance` enum; the raw
-failure is retained and the other two valid judges satisfy `min_judges=2`.
+The reference cohort is pinned from both Ollama's authenticated cloud catalogue
+and its public cloud registry. It contains 19 distinct executable revisions:
+the catalogue's 18 entries plus the current generic `gemma4` cloud revision,
+whose registry digest differs from `gemma4:31b-cloud`. Aliases with the same
+digest are counted once; retired, unavailable, local, and embedding-only tags
+are excluded. The resulting sweep contains 380 model responses and 1,140 judge
+rows. Of these, 1,137 contain valid rubric labels; three raw judge failures are
+retained, and the other two judges still satisfy `min_judges=2` for each sample.
 
 Generation uses a 1024-token reference budget. An empty final response caused
 by hidden reasoning exhaustion is repaired within the same run: one 4096-token

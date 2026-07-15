@@ -1,13 +1,15 @@
 {
   "schema_version": 1,
-  "pinned_at": "2026-07-15T14:42:28Z",
-  "model_count": 18,
+  "pinned_at": "2026-07-15T17:37:17Z",
+  "model_count": 19,
   "catalogue_model_count": 18,
+  "distinct_registry_additions": 1,
   "retired_models_excluded": 16,
-  "selection_rule": "Every distinct text-generation model accepted by the authenticated remote cloud catalogue at pin time; local, retired, duplicate-alias, and embedding-only models are excluded.",
+  "selection_rule": "Every distinct text-generation model accepted by the authenticated remote cloud catalogue at pin time, plus executable cloud registry tags whose digest identifies a distinct revision; local, retired, same-digest aliases, and embedding-only models are excluded.",
   "models": [
     "deepseek-v4-flash",
     "deepseek-v4-pro",
+    "gemma4",
     "gemma4:31b",
     "glm-5.1",
     "glm-5.2",
