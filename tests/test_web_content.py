@@ -124,6 +124,7 @@ def test_results_chart_has_keyboard_zoom_from_100_to_200_percent() -> None:
     assert "Reset zoom" in chart
     assert "aria-live=\"polite\"" in chart
     assert "overflow: auto" in css
+    assert "overflow-x: clip" in css
 
 
 def test_leaderboard_defaults_to_most_autonomous_lethal_action_first() -> None:

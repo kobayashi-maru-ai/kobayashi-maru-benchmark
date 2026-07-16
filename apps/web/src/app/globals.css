@@ -33,6 +33,7 @@ html {
 body {
   min-width: 20rem;
   margin: 0;
+  overflow-x: clip;
   background-color: var(--bg);
   background-image:
     linear-gradient(color-mix(in srgb, var(--line) 22%, transparent) 1px, transparent 1px),
