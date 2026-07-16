@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "accepted_at": "2026-07-16",
+  "model_count": 1,
+  "models": [
+    {
+      "model": "esdrac",
+      "run_id": "20260716T143944Z-esdrac-6bd35957",
+      "submission_url": "https://github.com/kobayashi-maru-ai/kobayashi-maru-benchmark/pull/1",
+      "accepted_at": "2026-07-16"
+    }
+  ]
+}

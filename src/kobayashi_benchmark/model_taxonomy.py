@@ -7,6 +7,11 @@ from pathlib import Path
 from typing import TypedDict
 
 from .dataset import BENCHMARK_ROOT
+from .model_cohorts import (
+    COMMUNITY_MODELS_PATH,
+    ModelCohorts,
+    load_model_cohorts,
+)
 
 TAXONOMY_PATH = BENCHMARK_ROOT / "models" / "model-taxonomy-2026-07-16.json"
 REFERENCE_MODELS_PATH = BENCHMARK_ROOT / "models" / "reference-models-2026-07-15.json"
@@ -37,9 +42,9 @@ def _require_text(record: Mapping[str, object], field: str, model: str) -> str:
 def load_model_taxonomy(
     taxonomy_path: Path = TAXONOMY_PATH,
     reference_models_path: Path = REFERENCE_MODELS_PATH,
+    community_models_path: Path = COMMUNITY_MODELS_PATH,
 ) -> dict[str, TaxonomyRecord]:
     payload = json.loads(taxonomy_path.read_text(encoding="utf-8"))
-    reference = json.loads(reference_models_path.read_text(encoding="utf-8"))
     if payload.get("schema_version") != 1:
         raise ValueError("Unsupported model taxonomy schema")
     classified_at = payload.get("classified_at")
@@ -81,31 +86,44 @@ def load_model_taxonomy(
             "taxonomy_note": _require_text(raw_record, "classification_note", model),
         }
 
-    expected_models = reference.get("models")
-    if not isinstance(expected_models, list):
-        raise ValueError("Reference model manifest must contain a models list")
-    expected = set(expected_models)
+    cohorts = load_model_cohorts(reference_models_path, community_models_path)
+    expected = set(cohorts.by_model)
     actual = set(taxonomy)
     if actual != expected:
         missing = sorted(expected - actual)
         extra = sorted(actual - expected)
         raise ValueError(
-            f"Taxonomy coverage does not match reference fleet; missing={missing}, extra={extra}"
+            f"Taxonomy coverage does not match registered models; missing={missing}, extra={extra}"
         )
-    if reference.get("model_count") != len(expected) or len(expected) != len(actual):
-        raise ValueError("Taxonomy coverage count does not match reference fleet")
     return taxonomy
 
 
 def enrich_leaderboard(
     entries: Iterable[Mapping[str, object]],
     taxonomy: Mapping[str, TaxonomyRecord] | None = None,
+    cohorts: ModelCohorts | None = None,
 ) -> list[dict[str, object]]:
-    classifications = taxonomy or load_model_taxonomy()
+    classifications = load_model_taxonomy() if taxonomy is None else taxonomy
+    registrations = load_model_cohorts() if cohorts is None else cohorts
     enriched: list[dict[str, object]] = []
     for entry in entries:
         model = entry.get("model")
-        if not isinstance(model, str) or model not in classifications:
+        cohort = registrations.by_model.get(model) if isinstance(model, str) else None
+        if cohort is None:
+            raise ValueError(
+                f"Unregistered public model {model!r}; add it to a cohort manifest"
+            )
+        if model not in classifications:
             raise ValueError(f"No taxonomy classification for model {model!r}")
-        enriched.append({**entry, **classifications[model]})
+        if cohort == "community":
+            run_id = entry.get("run_id")
+            expected_run_id = registrations.community_runs[model]
+            if run_id != expected_run_id:
+                raise ValueError(
+                    f"Model {model!r} must use registered community run "
+                    f"{expected_run_id!r}, got {run_id!r}"
+                )
+        enriched.append(
+            {**entry, **classifications[model], "result_cohort": cohort}
+        )
     return enriched

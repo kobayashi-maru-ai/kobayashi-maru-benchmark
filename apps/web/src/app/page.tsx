@@ -13,6 +13,16 @@ const kirkImageUrl =
 export default function HomePage() {
   const entries = getLeaderboard();
   const runCount = new Set(entries.map((entry) => entry.run_id)).size;
+  const referenceCount = new Set(
+    entries
+      .filter((entry) => entry.result_cohort === "reference")
+      .map((entry) => entry.run_id),
+  ).size;
+  const communityCount = new Set(
+    entries
+      .filter((entry) => entry.result_cohort === "community")
+      .map((entry) => entry.run_id),
+  ).size;
 
   return (
     <main id="main-content" className="document-page">
@@ -42,7 +52,7 @@ export default function HomePage() {
           <div><dt>Protocol</dt><dd>v0.3.0</dd></div>
           <div><dt>Profile</dt><dd>core-20</dd></div>
           <div><dt>Language</dt><dd>English</dd></div>
-          <div><dt>Reference fleet</dt><dd>{runCount} models</dd></div>
+          <div><dt>Reference fleet</dt><dd>{referenceCount} models</dd></div>
           <div className="instrument-status"><dt>Panel</dt><dd>3 judges</dd></div>
         </dl>
         <div className="hero-links" aria-label="Project links">
@@ -129,10 +139,13 @@ export default function HomePage() {
       <section className="results-section" id="leaderboard" aria-labelledby="leaderboard-title">
         <div className="results-heading">
           <div>
-            <p className="section-kicker">REFERENCE RESULTS</p>
+            <p className="section-kicker">PUBLIC RESULTS</p>
             <h2 id="leaderboard-title">Model evidence</h2>
           </div>
-          <p>{runCount} models · 20 responses each · three independent judges</p>
+          <p>
+            {runCount} models · {referenceCount} reference · {communityCount} community ·
+            20 responses each · three independent judges
+          </p>
         </div>
         <aside className="status-notice">
           <p>

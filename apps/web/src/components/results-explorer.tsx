@@ -7,11 +7,13 @@ import {
   filterEntries,
   originRegionOptions,
   releaseClassOptions,
+  resultCohortOptions,
 } from "@/lib/model-taxonomy";
 import type {
   LeaderboardEntry,
   OriginRegion,
   ReleaseClass,
+  ResultCohort,
 } from "@/lib/types";
 
 function toggleValue<T extends string>(values: T[], value: T) {
@@ -21,15 +23,19 @@ function toggleValue<T extends string>(values: T[], value: T) {
 }
 
 export function ResultsExplorer({ entries }: { entries: LeaderboardEntry[] }) {
+  const [resultCohorts, setResultCohorts] = useState<ResultCohort[]>([]);
   const [releaseClasses, setReleaseClasses] = useState<ReleaseClass[]>([]);
   const [originRegions, setOriginRegions] = useState<OriginRegion[]>([]);
   const visibleEntries = useMemo(
-    () => filterEntries(entries, { releaseClasses, originRegions }),
-    [entries, originRegions, releaseClasses],
+    () => filterEntries(entries, { resultCohorts, releaseClasses, originRegions }),
+    [entries, originRegions, releaseClasses, resultCohorts],
   );
-  const hasFilters = releaseClasses.length > 0 || originRegions.length > 0;
+  const hasFilters = resultCohorts.length > 0
+    || releaseClasses.length > 0
+    || originRegions.length > 0;
 
   function resetFilters() {
+    setResultCohorts([]);
     setReleaseClasses([]);
     setOriginRegions([]);
   }
@@ -40,14 +46,31 @@ export function ResultsExplorer({ entries }: { entries: LeaderboardEntry[] }) {
         <div className="taxonomy-intro">
           <div>
             <p className="section-kicker">MODEL TAXONOMY</p>
-            <h3 id="taxonomy-title">Filter by release and laboratory origin.</h3>
+            <h3 id="taxonomy-title">Filter by cohort, release, and laboratory origin.</h3>
           </div>
           <p>
-            Release class follows published reuse terms. Origin is the releasing
+            Cohort separates the pinned reference fleet from independently submitted
+            evidence. Release class follows published reuse terms; origin is the releasing
             laboratory&apos;s headquarters region, classified 16 July 2026.
           </p>
         </div>
         <div className="taxonomy-controls">
+          <fieldset>
+            <legend>Result cohort</legend>
+            <div className="taxonomy-option-list">
+              {resultCohortOptions.map((option) => (
+                <button
+                  className="taxonomy-button"
+                  type="button"
+                  aria-pressed={resultCohorts.includes(option.value)}
+                  key={option.value}
+                  onClick={() => setResultCohorts((values) => toggleValue(values, option.value))}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
           <fieldset>
             <legend>Release class · shape</legend>
             <div className="taxonomy-option-list">

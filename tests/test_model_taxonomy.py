@@ -11,25 +11,30 @@ from kobayashi_benchmark.model_taxonomy import (
 
 ROOT = Path(__file__).resolve().parents[1]
 REFERENCE_MODELS = ROOT / "benchmark" / "models" / "reference-models-2026-07-15.json"
+COMMUNITY_MODELS = ROOT / "benchmark" / "models" / "community-models-2026-07-16.json"
 TAXONOMY = ROOT / "benchmark" / "models" / "model-taxonomy-2026-07-16.json"
 
 
-def test_taxonomy_covers_the_exact_reference_fleet_with_auditable_metadata() -> None:
+def test_taxonomy_covers_all_registered_models_with_auditable_metadata() -> None:
     reference = json.loads(REFERENCE_MODELS.read_text(encoding="utf-8"))
+    community = json.loads(COMMUNITY_MODELS.read_text(encoding="utf-8"))
 
     taxonomy = load_model_taxonomy()
 
-    assert set(taxonomy) == set(reference["models"])
-    assert len(taxonomy) == reference["model_count"] == 34
+    registered = set(reference["models"]) | {
+        record["model"] for record in community["models"]
+    }
+    assert set(taxonomy) == registered
+    assert len(taxonomy) == reference["model_count"] + community["model_count"] == 35
     assert Counter(record["release_class"] for record in taxonomy.values()) == {
         "closed_proprietary": 9,
         "open_weights": 18,
-        "open_source": 7,
+        "open_source": 8,
     }
     assert Counter(record["origin_region"] for record in taxonomy.values()) == {
         "china": 11,
         "united_states": 19,
-        "europe": 2,
+        "europe": 3,
         "other": 2,
     }
     for model, record in taxonomy.items():
@@ -40,6 +45,20 @@ def test_taxonomy_covers_the_exact_reference_fleet_with_auditable_metadata() -> 
         assert record["taxonomy_source_url"].startswith("https://")
         assert record["taxonomy_source_label"].strip()
         assert record["taxonomy_classified_at"] == "2026-07-16"
+    assert taxonomy["esdrac"] == {
+        "model": "esdrac",
+        "organization": "natzx94",
+        "release_class": "open_source",
+        "origin_region": "europe",
+        "origin_country": "Spain",
+        "taxonomy_source_url": "https://huggingface.co/natzx94/EsDrac-v1-7B",
+        "taxonomy_source_label": "EsDrac v1 7B model card",
+        "taxonomy_classified_at": "2026-07-16",
+        "taxonomy_note": (
+            "Downloadable weights and implementation artefacts are released under "
+            "Apache 2.0; the publisher identifies the release as made in Mallorca."
+        ),
+    }
 
 
 def test_taxonomy_loader_rejects_incomplete_reference_coverage(tmp_path: Path) -> None:
@@ -94,7 +113,26 @@ def test_enrichment_preserves_order_and_rejects_unclassified_models() -> None:
     assert [entry["model"] for entry in enriched] == models
     assert enriched[0]["release_class"] == "closed_proprietary"
     assert enriched[1]["release_class"] == "open_source"
+    assert {entry["result_cohort"] for entry in enriched} == {"reference"}
     assert taxonomy[models[0]]["organization"] == "xAI"
 
-    with pytest.raises(ValueError, match="No taxonomy classification"):
+    with pytest.raises(ValueError, match="Unregistered public model"):
         enrich_leaderboard([{"model": "unclassified/model"}])
+
+    with pytest.raises(ValueError, match="No taxonomy classification"):
+        enrich_leaderboard([{"model": models[0]}], taxonomy={})
+
+
+def test_enrichment_requires_the_registered_community_run_id() -> None:
+    enriched = enrich_leaderboard(
+        [
+            {
+                "model": "esdrac",
+                "run_id": "20260716T143944Z-esdrac-6bd35957",
+            }
+        ]
+    )
+    assert enriched[0]["result_cohort"] == "community"
+
+    with pytest.raises(ValueError, match="registered community run"):
+        enrich_leaderboard([{"model": "esdrac", "run_id": "swapped-run"}])

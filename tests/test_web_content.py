@@ -41,7 +41,7 @@ def test_homepage_places_results_chart_before_leaderboard() -> None:
     )
 
 
-def test_results_explorer_owns_shared_release_and_origin_filters() -> None:
+def test_results_explorer_owns_shared_cohort_release_and_origin_filters() -> None:
     explorer = (WEB_SOURCE / "components" / "results-explorer.tsx").read_text(
         encoding="utf-8"
     )
@@ -52,12 +52,35 @@ def test_results_explorer_owns_shared_release_and_origin_filters() -> None:
         assert value in types
     for value in ("china", "united_states", "europe", "other"):
         assert value in types
+    for value in ("reference", "community"):
+        assert value in types
+    assert "resultCohorts.includes(entry.result_cohort)" in taxonomy
     assert "releaseClasses.includes(entry.release_class)" in taxonomy
     assert "originRegions.includes(entry.origin_region)" in taxonomy
-    assert "releaseMatch && originMatch" in taxonomy
+    assert "cohortMatch && releaseMatch && originMatch" in taxonomy
+    assert "Result cohort" in explorer
+    assert "option.label" in explorer
+    assert "Community submissions" in taxonomy
+    assert "pinned reference fleet from independently submitted" in explorer
     assert "visibleEntries.length" in explorer
     assert "Reset taxonomy filters" in explorer
     assert "No models match this taxonomy selection." in explorer
+
+
+def test_homepage_and_results_expose_reference_and_community_provenance() -> None:
+    homepage = (WEB_SOURCE / "app" / "page.tsx").read_text(encoding="utf-8")
+    leaderboard = (WEB_SOURCE / "components" / "leaderboard.tsx").read_text(
+        encoding="utf-8"
+    )
+    chart = (WEB_SOURCE / "components" / "results-chart.tsx").read_text(
+        encoding="utf-8"
+    )
+
+    assert "PUBLIC RESULTS" in homepage
+    assert "referenceCount} reference · {communityCount} community" in homepage
+    assert "resultCohortLabel(entry.result_cohort)" in leaderboard
+    assert "resultCohortLabel(entry.result_cohort)" in chart
+    assert "Community submission" in _public_text()
 
 
 def test_results_chart_prints_every_model_name_next_to_its_mark() -> None:

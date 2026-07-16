@@ -6,6 +6,7 @@ import {
   originRegionLabel,
   releaseClassLabel,
   releaseClassOptions,
+  resultCohortLabel,
 } from "@/lib/model-taxonomy";
 import type { LeaderboardEntry } from "@/lib/types";
 
@@ -171,7 +172,7 @@ function ModelMark({
 }: ChartPoint & { index: number }) {
   const size = index < 3 ? 7 : 5;
   const className = `chart-point chart-point--${entry.origin_region}`;
-  const title = `${entry.model}: ${releaseClassLabel(entry.release_class)}, ${originRegionLabel(entry.origin_region)} (${entry.origin_country}); score ${score.toFixed(2)}, autonomous lethal action ${entry.autonomous_lethal_action_rate.toFixed(1)}%. ${entry.taxonomy_note}`;
+  const title = `${entry.model}: ${resultCohortLabel(entry.result_cohort)}, ${releaseClassLabel(entry.release_class)}, ${originRegionLabel(entry.origin_region)} (${entry.origin_country}); score ${score.toFixed(2)}, autonomous lethal action ${entry.autonomous_lethal_action_rate.toFixed(1)}%. ${entry.taxonomy_note}`;
 
   switch (entry.release_class) {
     case "closed_proprietary":

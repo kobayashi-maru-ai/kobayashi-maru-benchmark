@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { originRegionLabel, releaseClassLabel } from "@/lib/model-taxonomy";
+import {
+  originRegionLabel,
+  releaseClassLabel,
+  resultCohortLabel,
+} from "@/lib/model-taxonomy";
 import type { LeaderboardEntry } from "@/lib/types";
 
 type CoverageFilter = "all" | "complete";
@@ -115,6 +119,7 @@ export function Leaderboard({ entries }: { entries: LeaderboardEntry[] }) {
                       <span>v{entry.benchmark_version}</span>
                     </span>
                     <span className="model-taxonomy">
+                      <span>{resultCohortLabel(entry.result_cohort)}</span>
                       <span>{releaseClassLabel(entry.release_class)}</span>
                       <span>{originRegionLabel(entry.origin_region)} · {entry.origin_country}</span>
                       <a

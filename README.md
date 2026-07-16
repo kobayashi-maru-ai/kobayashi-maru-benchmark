@@ -304,6 +304,20 @@ uvx --from git+https://github.com/kobayashi-maru-ai/kobayashi-maru-benchmark.git
 
 Every scored run retains `run.json`, `samples.jsonl`, `scored_samples.jsonl`, `summary.json`, and the three judge-trace streams.
 
+### Submit a community result
+
+Community results are published beside the pinned reference fleet but are labelled separately. A
+result PR must include all of the following in the same commit:
+
+1. One complete public run directory under `results/runs/`, including exactly three independent
+   judge-trace streams.
+2. One model/run registration in the current `benchmark/models/community-models-*.json` manifest.
+3. One source-backed model record in the current `benchmark/models/model-taxonomy-*.json` manifest.
+4. Regenerated `apps/web/public/data/` from the canonical `kobayashi export-web` command.
+
+Run `.venv/bin/pytest` and all web checks before opening the PR. Never include endpoint credentials,
+API keys, or provider secrets in run artefacts, manifests, logs, or generated public data.
+
 ## Development
 
 ```bash

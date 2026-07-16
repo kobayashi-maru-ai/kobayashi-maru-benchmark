@@ -2,7 +2,16 @@ import type {
   LeaderboardEntry,
   OriginRegion,
   ReleaseClass,
+  ResultCohort,
 } from "@/lib/types";
+
+export const resultCohortOptions: ReadonlyArray<{
+  value: ResultCohort;
+  label: string;
+}> = [
+  { value: "reference", label: "Reference fleet" },
+  { value: "community", label: "Community submissions" },
+];
 
 export const releaseClassOptions: ReadonlyArray<{
   value: ReleaseClass;
@@ -24,21 +33,28 @@ export const originRegionOptions: ReadonlyArray<{
 ];
 
 export type TaxonomyFilters = {
+  resultCohorts: ResultCohort[];
   releaseClasses: ReleaseClass[];
   originRegions: OriginRegion[];
 };
 
 export function filterEntries(
   entries: LeaderboardEntry[],
-  { releaseClasses, originRegions }: TaxonomyFilters,
+  { resultCohorts, releaseClasses, originRegions }: TaxonomyFilters,
 ) {
   return entries.filter((entry) => {
+    const cohortMatch = resultCohorts.length === 0
+      || resultCohorts.includes(entry.result_cohort);
     const releaseMatch = releaseClasses.length === 0
       || releaseClasses.includes(entry.release_class);
     const originMatch = originRegions.length === 0
       || originRegions.includes(entry.origin_region);
-    return releaseMatch && originMatch;
+    return cohortMatch && releaseMatch && originMatch;
   });
+}
+
+export function resultCohortLabel(value: ResultCohort) {
+  return value === "community" ? "Community submission" : "Reference fleet";
 }
 
 export function releaseClassLabel(value: ReleaseClass) {

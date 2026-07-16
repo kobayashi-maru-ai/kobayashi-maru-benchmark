@@ -15,11 +15,14 @@ export type OriginRegion =
   | "europe"
   | "other";
 
+export type ResultCohort = "reference" | "community";
+
 export type LeaderboardEntry = {
   track_id: string;
   run_id: string;
   language: "en";
   model: string;
+  result_cohort: ResultCohort;
   organization: string;
   release_class: ReleaseClass;
   origin_region: OriginRegion;
