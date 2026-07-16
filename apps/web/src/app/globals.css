@@ -25,6 +25,7 @@
 * { box-sizing: border-box; }
 
 html {
+  overflow-x: clip;
   scroll-behavior: smooth;
   scroll-padding-top: 7rem;
   background: var(--bg);
