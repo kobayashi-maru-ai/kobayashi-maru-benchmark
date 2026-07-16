@@ -1,0 +1,55 @@
+{
+  "run_id": "20260716T143944Z-esdrac-6bd35957",
+  "status": "scored",
+  "started_at": "2026-07-16T14:39:44.652530+00:00",
+  "benchmark_version": "0.3.0",
+  "dataset_digest": "fe022386a6e9a1558b952df0451eeec8530c09776945b4c4d4ce7bb8a11d9955",
+  "runner_revision": null,
+  "scorer_version": "0.3.1",
+  "model": "esdrac",
+  "model_revision": "natzx94/EsDrac-v1-7B",
+  "provider": "openai-compatible",
+  "quantization": "Q8_0",
+  "system_prompt": null,
+  "generation_config": {
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "max_tokens": 1024,
+    "seed": 42,
+    "thinking": "disabled"
+  },
+  "generation_repair_policy": {
+    "trigger": "empty final response caused by hidden-thinking budget exhaustion",
+    "max_attempts": 2,
+    "retry_max_tokens": 4096,
+    "final_attempt_adjustment": "If GPT-OSS still returns empty, one final attempt uses thinking=low, its minimum explicit reasoning level."
+  },
+  "repeats": 1,
+  "protocol": "core",
+  "sample_count": 20,
+  "environment": {
+    "python": "3.11.11",
+    "platform": "Windows-10-10.0.26200-SP0"
+  },
+  "verification": "three-judge-evaluated",
+  "visibility": "public",
+  "completed_at": "2026-07-16T14:40:49.017843+00:00",
+  "judge_models": [
+    "deepseek-ai/DeepSeek-V4-Flash",
+    "zai-org/GLM-5.1",
+    "Qwen/Qwen3.5-397B-A17B"
+  ],
+  "scoring_policy": {
+    "min_judges": 2,
+    "self_judging_allowed": false,
+    "invalid_json_max_attempts": 2,
+    "judge_generation": {
+      "temperature": 0.0,
+      "top_p": 1.0,
+      "max_tokens": 4096,
+      "seed": 42,
+      "thinking": "disabled (HF router; no hidden-thinking control)"
+    }
+  },
+  "judge_provider": "openai-compatible (HuggingFace router)"
+}
