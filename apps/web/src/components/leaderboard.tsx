@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { originRegionLabel, releaseClassLabel } from "@/lib/model-taxonomy";
 import type { LeaderboardEntry } from "@/lib/types";
 
 type CoverageFilter = "all" | "complete";
@@ -112,6 +113,17 @@ export function Leaderboard({ entries }: { entries: LeaderboardEntry[] }) {
                       <span className="track-token">{entry.language.toUpperCase()}</span>
                       <span>{entry.protocol}</span>
                       <span>v{entry.benchmark_version}</span>
+                    </span>
+                    <span className="model-taxonomy">
+                      <span>{releaseClassLabel(entry.release_class)}</span>
+                      <span>{originRegionLabel(entry.origin_region)} · {entry.origin_country}</span>
+                      <a
+                        href={entry.taxonomy_source_url}
+                        title={entry.taxonomy_note}
+                        aria-label={`${entry.model} taxonomy source: ${entry.taxonomy_source_label}`}
+                      >
+                        Source ↗
+                      </a>
                     </span>
                   </th>
                   <td data-label="Score" className="score-cell">

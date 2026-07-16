@@ -1,4 +1,5 @@
 import json
+from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -71,6 +72,19 @@ def test_public_export_matches_reference_cohort_and_is_provider_neutral() -> Non
     assert {entry["scorer_version"] for entry in leaderboard} == {"0.3.1"}
     assert {entry["coverage_status"] for entry in leaderboard} == {"complete"}
     assert {entry["samples_scored"] for entry in leaderboard} == {20}
+    assert Counter(entry["release_class"] for entry in leaderboard) == {
+        "closed_proprietary": 9,
+        "open_weights": 18,
+        "open_source": 7,
+    }
+    assert Counter(entry["origin_region"] for entry in leaderboard) == {
+        "china": 11,
+        "united_states": 19,
+        "europe": 2,
+        "other": 2,
+    }
+    assert {entry["taxonomy_classified_at"] for entry in leaderboard} == {"2026-07-16"}
+    assert all(entry["taxonomy_source_url"].startswith("https://") for entry in leaderboard)
 
     public_payload = "\n".join(
         [

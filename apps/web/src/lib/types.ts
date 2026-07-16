@@ -4,11 +4,30 @@ export type SuiteSummary = {
   stderr: number;
 };
 
+export type ReleaseClass =
+  | "closed_proprietary"
+  | "open_weights"
+  | "open_source";
+
+export type OriginRegion =
+  | "china"
+  | "united_states"
+  | "europe"
+  | "other";
+
 export type LeaderboardEntry = {
   track_id: string;
   run_id: string;
   language: "en";
   model: string;
+  organization: string;
+  release_class: ReleaseClass;
+  origin_region: OriginRegion;
+  origin_country: string;
+  taxonomy_source_url: string;
+  taxonomy_source_label: string;
+  taxonomy_classified_at: string;
+  taxonomy_note: string;
   benchmark_version: string;
   scorer_version: string | null;
   verification:

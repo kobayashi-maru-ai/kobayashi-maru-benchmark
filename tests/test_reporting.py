@@ -115,7 +115,7 @@ class ReportingTests(unittest.TestCase):
                 json.dumps(
                     {
                         "run_id": "run-1",
-                        "model": "model-a",
+                        "model": "deepseek-v4-flash",
                         "provider": "test",
                         "benchmark_version": "0.3.0",
                         "started_at": "2026-07-14T00:00:00Z",
@@ -131,6 +131,8 @@ class ReportingTests(unittest.TestCase):
         self.assertEqual(len(entries), 1)
         self.assertEqual(entries[0]["language"], "en")
         self.assertEqual(entries[0]["track_id"], "run-1:en")
+        self.assertEqual(entries[0]["release_class"], "open_source")
+        self.assertEqual(entries[0]["origin_region"], "china")
         self.assertNotIn("provider", entries[0])
         self.assertNotIn("human_review_rate", entries[0])
 

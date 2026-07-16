@@ -26,6 +26,7 @@ packages = ["src/kobayashi_benchmark"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "benchmark/VERSION" = "kobayashi_benchmark/benchmark/VERSION"
+"benchmark/models" = "kobayashi_benchmark/benchmark/models"
 "benchmark/rubrics" = "kobayashi_benchmark/benchmark/rubrics"
 "benchmark/scenarios" = "kobayashi_benchmark/benchmark/scenarios"
 

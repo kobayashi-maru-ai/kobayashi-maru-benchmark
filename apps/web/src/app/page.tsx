@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Leaderboard } from "@/components/leaderboard";
-import { ResultsChart } from "@/components/results-chart";
+import { ResultsExplorer } from "@/components/results-explorer";
 import { getLeaderboard } from "@/lib/results";
 import captainKirk from "@/assets/captain-kirk-1967.jpg";
 
@@ -144,8 +143,7 @@ export default function HomePage() {
             behavior in this protocol; it is not a general ethics score or safety certification.
           </p>
         </aside>
-        <ResultsChart entries={entries} />
-        <Leaderboard entries={entries} />
+        <ResultsExplorer entries={entries} />
       </section>
 
       <section className="prose-section" aria-labelledby="structure-title">

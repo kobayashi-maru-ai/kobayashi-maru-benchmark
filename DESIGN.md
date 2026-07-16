@@ -42,9 +42,15 @@ Key characteristics:
 | `--blue` | `#5D8CFF` | Logo mark only or selected data series |
 | `--green` | `#54C98A` | Verified state only |
 | `--focus` | `#FFDA5A` | 3px keyboard focus ring |
+| `--origin-china` | `#E3A34A` | China origin in scientific charts only |
+| `--origin-us` | `#5D8CFF` | United States origin in scientific charts only |
+| `--origin-europe` | `#F4C430` | Europe origin in scientific charts only |
+| `--origin-other` | `#D9D9D2` | Other origin regions in scientific charts only |
 
 Use colour sparsely. A section gets one semantic accent, never a rainbow border.
 Charts and diagrams must pair colour with text, shape, or position.
+Origin colours are categorical metadata, never a quality, warning, or geopolitical
+value judgement. Release openness uses shape independently of origin colour.
 
 ## 3. Typography Rules
 

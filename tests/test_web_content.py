@@ -32,10 +32,32 @@ def test_public_site_is_english_only_and_provider_neutral() -> None:
 
 def test_homepage_places_results_chart_before_leaderboard() -> None:
     homepage = (WEB_SOURCE / "app" / "page.tsx").read_text(encoding="utf-8")
-    assert "<ResultsChart entries={entries} />" in homepage
-    assert homepage.index("<ResultsChart entries={entries} />") < homepage.index(
-        "<Leaderboard entries={entries} />"
+    explorer = (WEB_SOURCE / "components" / "results-explorer.tsx").read_text(
+        encoding="utf-8"
     )
+    assert "<ResultsExplorer entries={entries} />" in homepage
+    assert explorer.index("<ResultsChart entries={visibleEntries} />") < explorer.index(
+        "<Leaderboard entries={visibleEntries} />"
+    )
+
+
+def test_results_explorer_owns_shared_release_and_origin_filters() -> None:
+    explorer = (WEB_SOURCE / "components" / "results-explorer.tsx").read_text(
+        encoding="utf-8"
+    )
+    taxonomy = (WEB_SOURCE / "lib" / "model-taxonomy.ts").read_text(encoding="utf-8")
+    types = (WEB_SOURCE / "lib" / "types.ts").read_text(encoding="utf-8")
+
+    for value in ("closed_proprietary", "open_weights", "open_source"):
+        assert value in types
+    for value in ("china", "united_states", "europe", "other"):
+        assert value in types
+    assert "releaseClasses.includes(entry.release_class)" in taxonomy
+    assert "originRegions.includes(entry.origin_region)" in taxonomy
+    assert "releaseMatch && originMatch" in taxonomy
+    assert "visibleEntries.length" in explorer
+    assert "Reset taxonomy filters" in explorer
+    assert "No models match this taxonomy selection." in explorer
 
 
 def test_results_chart_prints_every_model_name_next_to_its_mark() -> None:
@@ -49,6 +71,36 @@ def test_results_chart_uses_one_tall_label_sequence_to_prevent_cross_side_collis
     chart = (WEB_SOURCE / "components" / "results-chart.tsx").read_text(encoding="utf-8")
     assert "const HEIGHT = 720;" in chart
     assert "return spreadLabels(points);" in chart
+
+
+def test_results_chart_encodes_release_shape_and_origin_colour_with_text() -> None:
+    chart = (WEB_SOURCE / "components" / "results-chart.tsx").read_text(encoding="utf-8")
+    css = (WEB_SOURCE / "app" / "globals.css").read_text(encoding="utf-8")
+
+    assert 'case "closed_proprietary"' in chart
+    assert 'case "open_weights"' in chart
+    assert 'case "open_source"' in chart
+    assert "<circle" in chart
+    assert "<rect" in chart
+    assert "<polygon" in chart
+    assert "Release class · shape" in chart
+    assert "Laboratory origin · colour" in chart
+    for region in ("china", "united_states", "europe", "other"):
+        assert f"chart-point--{region}" in css
+    assert "entry.taxonomy_note" in chart
+
+
+def test_results_chart_has_keyboard_zoom_from_100_to_200_percent() -> None:
+    chart = (WEB_SOURCE / "components" / "results-chart.tsx").read_text(encoding="utf-8")
+    css = (WEB_SOURCE / "app" / "globals.css").read_text(encoding="utf-8")
+
+    assert '"use client"' in chart
+    assert "const ZOOM_LEVELS = [100, 125, 150, 175, 200]" in chart
+    assert "Zoom out" in chart
+    assert "Zoom in" in chart
+    assert "Reset zoom" in chart
+    assert "aria-live=\"polite\"" in chart
+    assert "overflow: auto" in css
 
 
 def test_leaderboard_defaults_to_most_autonomous_lethal_action_first() -> None:

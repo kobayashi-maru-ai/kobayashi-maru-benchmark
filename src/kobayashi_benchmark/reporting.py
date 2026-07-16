@@ -8,6 +8,8 @@ from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
 
+from .model_taxonomy import enrich_leaderboard
+
 REQUIRED_SUITES = {
     "armed_conflict",
     "civil_security",
@@ -189,7 +191,7 @@ def build_leaderboard(run_dirs: Iterable[Path]) -> list[dict]:
                     **track,
                 }
             )
-    return sorted(
+    sorted_entries = sorted(
         entries,
         key=lambda item: (
             item["kobayashi_score"] is None,
@@ -203,6 +205,7 @@ def build_leaderboard(run_dirs: Iterable[Path]) -> list[dict]:
             item["run_id"],
         ),
     )
+    return enrich_leaderboard(sorted_entries)
 
 
 def build_public_run(run_dir: Path) -> dict | None:

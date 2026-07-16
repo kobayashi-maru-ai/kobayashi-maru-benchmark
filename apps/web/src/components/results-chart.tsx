@@ -1,3 +1,12 @@
+"use client";
+
+import { useState } from "react";
+import {
+  originRegionOptions,
+  originRegionLabel,
+  releaseClassLabel,
+  releaseClassOptions,
+} from "@/lib/model-taxonomy";
 import type { LeaderboardEntry } from "@/lib/types";
 
 const WIDTH = 1040;
@@ -6,6 +15,7 @@ const PLOT = { left: 72, right: 28, top: 28, bottom: 62 };
 const LABEL_GAP = 18;
 const LABEL_OFFSET = 13;
 const LABEL_CHAR_WIDTH = 6.4;
+const ZOOM_LEVELS = [100, 125, 150, 175, 200] as const;
 
 type ChartPoint = {
   entry: LeaderboardEntry;
@@ -152,7 +162,52 @@ function placeLabels(points: ChartPoint[]) {
   return new Map(arranged.map((point) => [point.entry.track_id, point]));
 }
 
+function ModelMark({
+  entry,
+  index,
+  score,
+  x,
+  y,
+}: ChartPoint & { index: number }) {
+  const size = index < 3 ? 7 : 5;
+  const className = `chart-point chart-point--${entry.origin_region}`;
+  const title = `${entry.model}: ${releaseClassLabel(entry.release_class)}, ${originRegionLabel(entry.origin_region)} (${entry.origin_country}); score ${score.toFixed(2)}, autonomous lethal action ${entry.autonomous_lethal_action_rate.toFixed(1)}%. ${entry.taxonomy_note}`;
+
+  switch (entry.release_class) {
+    case "closed_proprietary":
+      return (
+        <circle className={className} cx={x} cy={y} r={size} tabIndex={0}>
+          <title>{title}</title>
+        </circle>
+      );
+    case "open_weights":
+      return (
+        <rect
+          className={className}
+          height={size * 2}
+          width={size * 2}
+          x={x - size}
+          y={y - size}
+          tabIndex={0}
+        >
+          <title>{title}</title>
+        </rect>
+      );
+    case "open_source":
+      return (
+        <polygon
+          className={className}
+          points={`${x},${y - size - 1} ${x + size + 1},${y + size} ${x - size - 1},${y + size}`}
+          tabIndex={0}
+        >
+          <title>{title}</title>
+        </polygon>
+      );
+  }
+}
+
 export function ResultsChart({ entries }: { entries: LeaderboardEntry[] }) {
+  const [zoom, setZoom] = useState<number>(100);
   const points: ChartPoint[] = entries.flatMap((entry) => {
     const score = scoreFor(entry);
     return score === null
@@ -166,6 +221,18 @@ export function ResultsChart({ entries }: { entries: LeaderboardEntry[] }) {
   });
   const labels = placeLabels(points);
   const ticks = [0, 20, 40, 60, 80, 100];
+  function stepZoom(direction: -1 | 1) {
+    setZoom((currentZoom) => {
+      const currentIndex = ZOOM_LEVELS.indexOf(
+        currentZoom as (typeof ZOOM_LEVELS)[number],
+      );
+      const nextIndex = Math.min(
+        ZOOM_LEVELS.length - 1,
+        Math.max(0, currentIndex + direction),
+      );
+      return ZOOM_LEVELS[nextIndex];
+    });
+  }
 
   return (
     <figure className="results-chart" aria-labelledby="results-chart-title">
@@ -179,12 +246,66 @@ export function ResultsChart({ entries }: { entries: LeaderboardEntry[] }) {
           down for a lower autonomous-lethal-action rate.
         </p>
       </div>
-      <div className="chart-frame" tabIndex={0} aria-label="Scrollable model results chart">
+      <div className="chart-tools">
+        <div className="chart-legend" aria-label="Model taxonomy legend">
+          <div>
+            <strong>Release class · shape</strong>
+            {releaseClassOptions.map((option) => (
+              <span key={option.value}>
+                <i className={`taxonomy-shape taxonomy-shape--${option.value}`} aria-hidden="true" />
+                {option.label}
+              </span>
+            ))}
+          </div>
+          <div>
+            <strong>Laboratory origin · colour</strong>
+            {originRegionOptions.map((option) => (
+              <span key={option.value}>
+                <i className={`taxonomy-origin taxonomy-origin--${option.value}`} aria-hidden="true" />
+                {option.label}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="chart-zoom" aria-label="Chart zoom controls">
+          <button
+            type="button"
+            aria-label="Zoom out"
+            disabled={zoom === ZOOM_LEVELS[0]}
+            onClick={() => stepZoom(-1)}
+          >
+            −
+          </button>
+          <span aria-live="polite">{zoom}%</span>
+          <button
+            type="button"
+            aria-label="Zoom in"
+            disabled={zoom === ZOOM_LEVELS.at(-1)}
+            onClick={() => stepZoom(1)}
+          >
+            +
+          </button>
+          <button type="button" disabled={zoom === 100} onClick={() => setZoom(100)}>
+            Reset zoom
+          </button>
+        </div>
+      </div>
+      <div
+        className="chart-frame"
+        data-zoomed={zoom > 100}
+        tabIndex={0}
+        aria-label={`Scrollable model results chart at ${zoom}% zoom`}
+      >
         <svg
+          id="model-results-chart"
           className="scatter-chart"
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           role="img"
           aria-describedby="results-chart-description"
+          style={{
+            minWidth: `${Math.round(WIDTH * zoom / 100)}px`,
+            width: `${zoom}%`,
+          }}
         >
           <desc id="results-chart-description">
             Scatter plot comparing Kobayashi score and autonomous lethal action rate
@@ -241,15 +362,7 @@ export function ResultsChart({ entries }: { entries: LeaderboardEntry[] }) {
                   y1={y}
                   y2={label.labelY}
                 />
-                <circle
-                  className="chart-point"
-                  cx={x}
-                  cy={y}
-                  r={index < 3 ? 7 : 5}
-                  tabIndex={0}
-                >
-                  <title>{`${entry.model}: score ${score.toFixed(2)}, autonomous lethal action ${entry.autonomous_lethal_action_rate.toFixed(1)}%`}</title>
-                </circle>
+                <ModelMark entry={entry} index={index} score={score} x={x} y={y} />
                 <text
                   className="chart-model-label"
                   dominantBaseline="middle"
